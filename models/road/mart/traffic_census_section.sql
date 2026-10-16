@@ -53,14 +53,14 @@ SELECT
     END AS section_type,
     TRY_CAST(k."区間延長（ｋｍ）" AS DOUBLE) AS section_length_km,
     TRY_CAST(k."一方通行フラグ" AS INTEGER) AS oneway_code,
-    lpad(NULLIF(k."平成２７年度／交通調査基本区間番号", ''), 11, '0') AS section_id_h27,
+    lpad(k."平成２７年度／交通調査基本区間番号", 11, '0') AS section_id_h27,
 
     -- 時間帯別交通量表への結合キー。基本区間より粗い「調査単位区間」の単位で付く
     lpad(k."交通量／都道府県指定市コード", 5, '0') AS traffic_pref_city_code,
     k."交通量／調査単位区間番号" AS traffic_survey_unit_id,
 
-    NULLIF(k."上り／交通量観測地点地名", '') AS up_observation_point,
-    NULLIF(k."下り／交通量観測地点地名", '') AS down_observation_point,
+    k."上り／交通量観測地点地名" AS up_observation_point,
+    k."下り／交通量観測地点地名" AS down_observation_point,
     TRY_CAST(k."上り／令和３年度調査交通量観測・非観測の別" AS INTEGER) AS up_observation_code,
     TRY_CAST(k."下り／令和３年度調査交通量観測・非観測の別" AS INTEGER) AS down_observation_code,
     CASE k."上り／令和３年度調査交通量観測・非観測の別"
