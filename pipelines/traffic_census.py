@@ -16,7 +16,7 @@ import csv
 import logging
 import time
 from pathlib import Path
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 import duckdb
@@ -52,17 +52,44 @@ USER_AGENT = "queria-dataset-mlit (+https://queria.io/)"
 REQUEST_SLEEP = 0.1
 REQUEST_TIMEOUT = 30
 
+# 一時的な失敗（5xx・接続断・タイムアウト）で取得全体を落とさないための再試行。
+# 待ち時間は 5, 10, 20, 40 秒
+REQUEST_RETRIES = 4
+RETRY_BACKOFF = 5
+
 
 def _fetch(url: str) -> bytes | None:
     """URL を取得する。404 は None を返す（配信されていないタイルがあるため）。"""
     request = Request(url, headers={"User-Agent": USER_AGENT})
-    try:
-        with urlopen(request, timeout=REQUEST_TIMEOUT) as response:
-            return response.read()
-    except HTTPError as error:
-        if error.code == 404:
-            return None
-        raise
+    for attempt in range(REQUEST_RETRIES + 1):
+        try:
+            with urlopen(request, timeout=REQUEST_TIMEOUT) as response:
+                return response.read()
+        except HTTPError as error:
+            if error.code == 404:
+                return None
+            if error.code < 500 or attempt == REQUEST_RETRIES:
+                raise
+            reason = error
+        except (URLError, TimeoutError, ConnectionError) as error:
+            if attempt == REQUEST_RETRIES:
+                raise
+            reason = error
+        wait = RETRY_BACKOFF * 2**attempt
+        logger.warning("retry in %ds: %s (%s)", wait, url, reason)
+        time.sleep(wait)
+    raise AssertionError("unreachable")
+
+
+def _write_atomic(path: Path, body: bytes) -> None:
+    """一時ファイルに書いてから置き換える。
+
+    取得は既存ファイルを済みとみなして飛ばすので、書きかけで中断したファイルが
+    残ると次の実行でそのまま使われてしまう。
+    """
+    partial = path.with_name(path.name + ".part")
+    partial.write_bytes(body)
+    partial.replace(path)
 
 
 def _normalize_csv(text: str) -> str:
@@ -95,7 +122,7 @@ def _download_csv(url_template: str, destination: Path) -> None:
         body = _fetch(url_template.format(pref=pref))
         if body is None:
             raise RuntimeError(f"not found: {url_template.format(pref=pref)}")
-        path.write_text(_normalize_csv(body.decode("cp932")), encoding="utf-8")
+        _write_atomic(path, _normalize_csv(body.decode("cp932")).encode("utf-8"))
         logger.info("downloaded %s (%s bytes)", path, len(body))
         time.sleep(REQUEST_SLEEP)
 
@@ -114,7 +141,8 @@ def download_tiles() -> None:
     """区間形状の GeoJSON タイルをダウンロードする。
 
     索引は tools/build_tile_index.py が作る陸域の z12 タイル一覧。
-    配信されていないタイルは 404 になるので飛ばす。
+    配信されていないタイルは 404 になるので飛ばし、空の .missing を置いて
+    次の実行では叩かない（索引の7割あまりが 404 になる）。
     """
     with TILE_INDEX.open(encoding="utf-8") as handle:
         tiles = [(int(row["x"]), int(row["y"])) for row in csv.DictReader(handle)]
