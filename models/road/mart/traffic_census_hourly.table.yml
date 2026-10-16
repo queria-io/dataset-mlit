@@ -7,10 +7,12 @@ description: >
   7時台から翌6時台までの24時間分を縦持ちにしたもの。
 
   区間の単位は交通調査基本区間ではなく、それを集約した交通量調査単位区間。
-  traffic_census_section と結合すると1つの観測値が複数の基本区間に付くため、
+  traffic_census_section とは (traffic_pref_city_code, traffic_survey_unit_id) =
+  (pref_city_code, survey_unit_id) で結合する。結合すると1つの観測値が複数の基本区間に付くため、
   区間をまたいで合計すると二重に数えることになる。合計はこの表の単位のまま行う。
 
   昼間12時間交通量は 7時台〜18時台の合計にあたる（is_daytime_12h）。
+  時刻順の並べ替えは hour ではなく hour_order（7時台が0）を使う。
   観測を行っていない区間の値は推定値で、observation_type で見分ける。
 
   出典: 「令和3年度全国道路・街路交通情勢調査 一般交通量調査」（国土交通省）
