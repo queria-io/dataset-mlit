@@ -155,14 +155,18 @@ def download_tiles() -> None:
         found = 0
         for x, y in tiles:
             path = directory / f"{x}_{y}.geojson"
+            missing = path.with_suffix(".missing")
             if path.exists():
                 found += 1
+                continue
+            if missing.exists():
                 continue
             body = _fetch(TILE_URL.format(layer=layer, z=TILE_ZOOM, x=x, y=y))
             time.sleep(REQUEST_SLEEP)
             if body is None:
+                missing.touch()
                 continue
-            path.write_bytes(body)
+            _write_atomic(path, body)
             found += 1
         logger.info("%s: %d tiles", layer, found)
 
@@ -182,19 +186,15 @@ def build_geometry_parquet() -> None:
         """
         COPY (
             WITH features AS (
-                SELECT
-                    regexp_extract(filename, 'geojson_tiles/([^/]+)/', 1) AS layer,
-                    unnest(features) AS feature
+                SELECT unnest(features) AS feature
                 FROM read_json(
                     $tiles,
-                    filename = true,
                     columns = {'features': 'JSON[]'}
                 )
             ),
             parts AS (
                 SELECT
                     json_extract_string(feature, '$.properties.census') AS section_id,
-                    layer,
                     unnest(ST_Dump(
                         ST_GeomFromGeoJSON(json_extract(feature, '$.geometry'))
                     )).geom AS line
@@ -202,7 +202,6 @@ def build_geometry_parquet() -> None:
             )
             SELECT
                 section_id,
-                any_value(layer) AS tile_layer,
                 ST_AsWKB(ST_Collect(list(line))) AS geometry
             FROM parts
             WHERE section_id IS NOT NULL
