@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# dbt
+target/
+dbt_packages/
+dbt_internal_packages/
+logs/
+.user.yml
+package-lock.yml
+
+# DuckLake
+.queria/
+
+# Environment
+.env
+
+# Data
+data/csv/
+data/geojson_tiles/
+data/parquet/
+*.duckdb
+dist/
+data/*.log
