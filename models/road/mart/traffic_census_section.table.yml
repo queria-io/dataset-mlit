@@ -1,0 +1,181 @@
+schema: road
+name: traffic_census_section
+title: 道路交通センサス 区間別交通量
+description: >
+  令和3年度 全国道路・街路交通情勢調査（道路交通センサス）一般交通量調査の
+  交通調査基本区間ごとの結果。1行 = 1区間で、昼間12時間・24時間の自動車類交通量、
+  大型車混入率、混雑度、旅行速度、車線数や幅員などの道路構造、代表沿道状況を持つ。
+  区間の形状（MultiLineString）を付けてあるので、そのまま地図に重ねられる。
+
+  対象は高速自動車国道・都市高速道路・一般国道・主要地方道・一般都道府県道・
+  指定市の一般市道の7区分で、一般市町村道は調査対象外。
+
+  交通量は全区間が実測ではない。up_observation_type / down_observation_type が
+  「非観測（推定値）」の区間は、平成27年度調査の交通量と両年度で観測した区間の
+  データから推定した値で、全国の約3割を占める。「データなし（推定不能）」の区間は
+  交通量が NULL になる。
+
+  混雑度は交通量を交通容量で割った値で、1.0 を超えると需要が容量を上回っている
+  ことを表す。昼夜率は24時間交通量÷昼間12時間交通量。
+
+  区間形状は一般交通量調査結果の可視化ツールが配信するタイルを区間番号でまとめたもの。
+  配信時に座標が小数5桁（約1m）に丸められているため、原典の精度そのものではない。
+  形状が得られなかった区間は geometry が NULL になる。
+
+  出典: 「令和3年度全国道路・街路交通情勢調査 一般交通量調査」（国土交通省）
+  https://www.mlit.go.jp/road/census/r3/ を加工して作成。
+published: true
+sources:
+  - path: https://www.mlit.go.jp/road/census/r3/
+fields:
+  - name: survey_year
+    title: 調査年度
+    description: 令和3年度調査は 2021
+  - name: section_id
+    title: 交通調査基本区間番号
+    description: 11桁。この表で一意
+  - name: generation_code
+    title: 世代管理番号
+    description: 区間の分割・属性変更で繰り上がる。年度をまたぐ突合で使う
+  - name: prefecture_code
+    title: 都道府県コード
+    description: 2桁。配布ファイルの単位
+  - name: road_type_code
+    title: 道路種別コード
+  - name: road_type
+    title: 道路種別
+  - name: route_number
+    title: 路線番号
+  - name: route_name
+    title: 路線名
+  - name: administrator_code
+    title: 管理区分コード
+  - name: administrator
+    title: 道路管理者
+  - name: city_code
+    title: 市区町村コード
+    description: 5桁。令和3年4月1日時点の標準コードで、指定市は区ごと
+  - name: is_motorway
+    title: 自動車専用道路
+  - name: section_type_code
+    title: 区間種別コード
+  - name: section_type
+    title: 区間種別
+  - name: section_length_km
+    title: 区間延長
+    description: km。道路中心線上の延長
+  - name: oneway_code
+    title: 一方通行フラグ
+    description: 0=なし、1=起点から終点方向、2=終点から起点方向
+  - name: section_id_h27
+    title: 平成27年度の交通調査基本区間番号
+    description: 年度をまたぐ突合はこの列で行う。番号が同じでも別区間のことがある
+  - name: traffic_pref_city_code
+    title: 交通量調査の都道府県指定市コード
+    description: traffic_census_hourly への結合キーの一部
+  - name: traffic_survey_unit_id
+    title: 交通量調査単位区間番号
+    description: 基本区間を集約した単位。複数の基本区間が同じ番号を持つ
+  - name: up_observation_point
+    title: 上り側の交通量観測地点地名
+  - name: down_observation_point
+    title: 下り側の交通量観測地点地名
+  - name: up_observation_code
+    title: 上り側の観測・非観測コード
+  - name: down_observation_code
+    title: 下り側の観測・非観測コード
+  - name: up_observation_type
+    title: 上り側の観測・非観測の別
+    description: 観測 / 非観測（推定値）/ データなし（推定不能）
+  - name: down_observation_type
+    title: 下り側の観測・非観測の別
+  - name: up_observation_date
+    title: 上り側の交通量観測年月日
+    description: YYYYMMDD。機械観測で複数日を使った場合は日が 00
+  - name: down_observation_date
+    title: 下り側の交通量観測年月日
+  - name: up_volume_12h
+    title: 上り 昼間12時間交通量
+    description: 台。午前7時〜午後7時
+  - name: down_volume_12h
+    title: 下り 昼間12時間交通量
+  - name: up_volume_24h
+    title: 上り 24時間交通量
+  - name: down_volume_24h
+    title: 下り 24時間交通量
+  - name: volume_12h_small
+    title: 昼間12時間交通量（小型車・上下合計）
+  - name: volume_12h_large
+    title: 昼間12時間交通量（大型車・上下合計）
+  - name: volume_12h
+    title: 昼間12時間交通量（上下合計）
+  - name: volume_24h_small
+    title: 24時間交通量（小型車・上下合計）
+  - name: volume_24h_large
+    title: 24時間交通量（大型車・上下合計）
+  - name: volume_24h
+    title: 24時間交通量（上下合計）
+  - name: day_night_ratio
+    title: 昼夜率
+    description: 24時間交通量 ÷ 昼間12時間交通量
+  - name: peak_ratio_12h
+    title: 昼間12時間ピーク比率
+    description: '%'
+  - name: large_vehicle_ratio_12h
+    title: 昼間12時間大型車混入率
+    description: '%'
+  - name: congestion_degree
+    title: 混雑度
+    description: 交通量 ÷ 交通容量。1.0 超で需要が容量を上回る
+  - name: volume_12h_h27
+    title: 平成27年度 昼間12時間交通量
+  - name: volume_24h_h27
+    title: 平成27年度 24時間交通量
+  - name: speed_peak_up
+    title: 朝夕（混雑時）旅行速度 上り
+    description: km/h
+  - name: speed_peak_down
+    title: 朝夕（混雑時）旅行速度 下り
+  - name: speed_offpeak_up
+    title: 昼間（非混雑時）旅行速度 上り
+  - name: speed_offpeak_down
+    title: 昼間（非混雑時）旅行速度 下り
+  - name: speed_12h_up
+    title: 昼間12時間平均旅行速度 上り
+    description: 時間帯別交通量で加重平均したもの
+  - name: speed_12h_down
+    title: 昼間12時間平均旅行速度 下り
+  - name: road_width_m
+    title: 道路部幅員
+    description: m
+  - name: carriageway_width_m
+    title: 車道幅員
+    description: m
+  - name: lanes
+    title: 車線数
+  - name: sidewalk_ratio
+    title: 歩道設置率
+    description: '%'
+  - name: bus_route_ratio
+    title: バス路線延長率
+    description: '%'
+  - name: signalized_intersection_density
+    title: 信号交差点密度
+    description: 箇所/km
+  - name: unsignalized_intersection_density
+    title: 信号のない交差点密度
+    description: 箇所/km
+  - name: green_time_ratio
+    title: 代表信号交差点の青時間比
+    description: '%'
+  - name: speed_limit
+    title: 指定最高速度
+    description: km/h
+  - name: roadside_type_code
+    title: 代表沿道状況コード
+  - name: roadside_type
+    title: 代表沿道状況
+    description: 人口集中地区かつ商業地域 / 人口集中地区（商業地域を除く）/ その他市街部 / 平地部 / 山地部
+  - name: geometry
+    title: 区間形状
+    description: MultiLineString

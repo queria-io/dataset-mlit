@@ -1,0 +1,67 @@
+schema: road
+name: traffic_census_hourly
+title: 道路交通センサス 時間帯別交通量
+description: >
+  令和3年度 全国道路・街路交通情勢調査（道路交通センサス）一般交通量調査の
+  時間帯別交通量。1行 = 調査単位区間 × 上下 × 車種 × 時間帯で、
+  7時台から翌6時台までの24時間分を縦持ちにしたもの。
+
+  区間の単位は交通調査基本区間ではなく、それを集約した交通量調査単位区間。
+  traffic_census_section と結合すると1つの観測値が複数の基本区間に付くため、
+  区間をまたいで合計すると二重に数えることになる。合計はこの表の単位のまま行う。
+
+  昼間12時間交通量は 7時台〜18時台の合計にあたる（is_daytime_12h）。
+  観測を行っていない区間の値は推定値で、observation_type で見分ける。
+
+  出典: 「令和3年度全国道路・街路交通情勢調査 一般交通量調査」（国土交通省）
+  https://www.mlit.go.jp/road/census/r3/ を加工して作成。
+published: true
+sources:
+  - path: https://www.mlit.go.jp/road/census/r3/
+fields:
+  - name: survey_year
+    title: 調査年度
+    description: 令和3年度調査は 2021
+  - name: prefecture_code
+    title: 都道府県コード
+    description: 2桁。配布ファイルの単位
+  - name: pref_city_code
+    title: 都道府県指定市コード
+    description: 5桁。traffic_census_section の traffic_pref_city_code と対応する
+  - name: survey_unit_id
+    title: 交通量調査単位区間番号
+  - name: road_type_code
+    title: 道路種別コード
+  - name: route_number
+    title: 路線番号
+  - name: observation_code
+    title: 観測・非観測コード
+  - name: observation_type
+    title: 観測・非観測の別
+    description: 観測 / 非観測（推定値）/ データなし（推定不能）
+  - name: observation_hours_code
+    title: 12時間・24時間観測の別
+    description: 1=12時間観測地点、2=24時間観測地点。非観測で個別調査の観測値も使っていない区間は NULL
+  - name: observation_date
+    title: 交通量観測年月日
+    description: YYYYMMDD。機械観測で複数日を使った場合は日が 00。非観測でも個別調査の観測値を使った区間はその調査の日付を持ち、令和3年度より前のことがある。日付の無い区間は NULL
+  - name: weather
+    title: 天候
+    description: 晴 / 曇 / 雨 / 霧 / 雪 / 不明。機械観測は不明
+  - name: direction
+    title: 上り・下りの別
+  - name: vehicle_type
+    title: 車種区分
+    description: 小型車 / 大型車。ナンバープレートの分類番号による
+  - name: hour
+    title: 時間帯
+    description: 0〜23。その時刻台の1時間
+  - name: hour_order
+    title: 観測順
+    description: 7時台を0とした0〜23。調査の1日は7時台に始まり翌6時台に終わる
+  - name: is_daytime_12h
+    title: 昼間12時間に含まれるか
+    description: 7時台〜18時台が true
+  - name: volume
+    title: 時間帯別自動車類交通量
+    description: 台/時

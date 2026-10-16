@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: raw_kasho
+    description: >
+      令和3年度 一般交通量調査 箇所別基本表の配布 CSV をそのまま読んだもの。
+      列名は配布時の日本語のままで、末尾の再掲6列だけを落としている。
+
+  - name: raw_jikantai
+    description: >
+      令和3年度 一般交通量調査 時間帯別交通量表の配布 CSV をそのまま読んだもの。
+      列名は配布時の日本語のまま、時間帯は横持ち。
+
+  - name: raw_section_geometry
+    description: >
+      交通調査基本区間の形状。可視化ツールが配信する GeoJSON タイルを
+      パイプラインが結合し、区間番号ごとに1本の MultiLineString にまとめた Parquet。

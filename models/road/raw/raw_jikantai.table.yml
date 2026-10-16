@@ -1,0 +1,4 @@
+schema: road
+name: raw_jikantai
+description: 令和3年度 一般交通量調査の配布 CSV を読み込んだ中間テーブル。列名は配布時のまま。
+published: false
