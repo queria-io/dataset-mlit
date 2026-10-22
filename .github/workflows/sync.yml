@@ -1,0 +1,34 @@
+name: Sync
+
+on:
+  push:
+    branches: [main]
+    # 取得先は令和3年度調査に固定で、取得に3時間ほどかかる。データの中身が変わる
+    # ファイルを変えたときだけ作り直す。新しい調査年度を取り込むときは手動で実行する
+    paths:
+      - "models/**"
+      - "tests/**"
+      - "pipelines/**"
+      - "tools/**"
+      - "main.py"
+      - "dbt_project.yml"
+      - "profiles.yml"
+      - "packages.yml"
+      - "dataset.yml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".python-version"
+      - "shared"
+      - ".github/workflows/sync.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    uses: queria-io/dataset-shared/.github/workflows/sync.yml@main
+    with:
+      dataset_name: mlit
+    secrets: inherit

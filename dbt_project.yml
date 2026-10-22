@@ -1,0 +1,20 @@
+name: "mlit"
+version: "1.0.0"
+
+profile: "mlit"
+
+model-paths: ["models"]
+macro-paths: ["macros", "shared/macros"]
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  mlit:
+    +database: mlit
+    +materialized: view
+    road:
+      raw:
+        +materialized: table
+      stg:
+        +materialized: table
+      mart:
+        +materialized: table
