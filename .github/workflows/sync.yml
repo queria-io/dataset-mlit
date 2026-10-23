@@ -31,4 +31,7 @@ jobs:
     uses: queria-io/dataset-shared/.github/workflows/sync.yml@main
     with:
       dataset_name: mlit
+      # 区間形状のタイルを索引の全件（約6.3万リクエスト）取りに行くので、まっさらな
+      # ランナーでは取得だけで約3時間かかる。既定の 90 分では打ち切られる
+      timeout_minutes: 300
     secrets: inherit
