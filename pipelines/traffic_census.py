@@ -14,12 +14,14 @@ https://www.mlit.go.jp/road/census/r3/
 
 import csv
 import logging
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
 
 import duckdb
+
+from shared.fetch import fetch, write_atomic
 
 logger = logging.getLogger("pipelines")
 
@@ -45,51 +47,36 @@ CSV_DIR = DATA_DIR / "csv"
 TILE_DIR = DATA_DIR / "geojson_tiles"
 PARQUET_DIR = DATA_DIR / "parquet"
 TILE_INDEX = Path("tools/tile_index_z12.csv")
+TILE_LIST = Path("tools/tile_list_z12.csv")
 
 USER_AGENT = "queria-dataset-mlit (+https://queria.io/)"
 
-# 相手サーバーへの間隔。タイルは6万件あまり叩くので必ず空ける
+# 相手サーバーへの間隔。1本の取得ごとに空ける
 REQUEST_SLEEP = 0.1
 REQUEST_TIMEOUT = 30
 
-# 一時的な失敗（5xx・接続断・タイムアウト）で取得全体を落とさないための再試行。
-# 待ち時間は 5, 10, 20, 40 秒
-REQUEST_RETRIES = 4
-RETRY_BACKOFF = 5
+# タイルを同時に取りに行く本数。米国のランナーからは1リクエスト 0.6 秒ほどかかるので
+# 1本では1時間あたり5千枚弱しか取れない
+TILE_WORKERS = 4
+# 全スレッドを合わせたタイルの要求の上限（毎秒）。応答が速い場所から流しても、
+# 配信元にはこれ以上の頻度で要求しない
+TILE_REQUESTS_PER_SECOND = 5
 
 
-def _fetch(url: str) -> bytes | None:
-    """URL を取得する。404 は None を返す（配信されていないタイルがあるため）。"""
-    request = Request(url, headers={"User-Agent": USER_AGENT})
-    for attempt in range(REQUEST_RETRIES + 1):
-        try:
-            with urlopen(request, timeout=REQUEST_TIMEOUT) as response:
-                return response.read()
-        except HTTPError as error:
-            if error.code == 404:
-                return None
-            if error.code < 500 or attempt == REQUEST_RETRIES:
-                raise
-            reason = error
-        except (URLError, TimeoutError, ConnectionError) as error:
-            if attempt == REQUEST_RETRIES:
-                raise
-            reason = error
-        wait = RETRY_BACKOFF * 2**attempt
-        logger.warning("retry in %ds: %s (%s)", wait, url, reason)
-        time.sleep(wait)
-    raise AssertionError("unreachable")
+class Pacer:
+    """複数のスレッドから呼ばれても、要求の間隔を全体で interval 秒以上に保つ。"""
 
+    def __init__(self, per_second: float) -> None:
+        self.interval = 1 / per_second
+        self.next_at = 0.0
+        self.lock = threading.Lock()
 
-def _write_atomic(path: Path, body: bytes) -> None:
-    """一時ファイルに書いてから置き換える。
-
-    取得は既存ファイルを済みとみなして飛ばすので、書きかけで中断したファイルが
-    残ると次の実行でそのまま使われてしまう。
-    """
-    partial = path.with_name(path.name + ".part")
-    partial.write_bytes(body)
-    partial.replace(path)
+    def wait(self) -> None:
+        with self.lock:
+            now = time.monotonic()
+            start = max(now, self.next_at)
+            self.next_at = start + self.interval
+        time.sleep(start - now)
 
 
 def _normalize_csv(text: str) -> str:
@@ -119,10 +106,8 @@ def _download_csv(url_template: str, destination: Path) -> None:
         path = destination / f"{pref}.csv"
         if path.exists():
             continue
-        body = _fetch(url_template.format(pref=pref))
-        if body is None:
-            raise RuntimeError(f"not found: {url_template.format(pref=pref)}")
-        _write_atomic(path, _normalize_csv(body.decode("cp932")).encode("utf-8"))
+        body = fetch(url_template.format(pref=pref), user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT)
+        write_atomic(path, _normalize_csv(body.decode("cp932")))
         logger.info("downloaded %s (%s bytes)", path, len(body))
         time.sleep(REQUEST_SLEEP)
 
@@ -137,38 +122,51 @@ def download_jikantai() -> None:
     _download_csv(JIKANTAI_URL, CSV_DIR / "jikantai")
 
 
+_tile_pacer = Pacer(TILE_REQUESTS_PER_SECOND)
+
+
+def _download_tile(tile: tuple[str, int, int]) -> bool:
+    layer, x, y = tile
+    url = TILE_URL.format(layer=layer, z=TILE_ZOOM, x=x, y=y)
+    _tile_pacer.wait()
+    body = fetch(url, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT, not_found_ok=True)
+    if body is None:
+        return False
+    write_atomic(TILE_DIR / layer / f"{x}_{y}.geojson", body)
+    return True
+
+
 def download_tiles() -> None:
     """区間形状の GeoJSON タイルをダウンロードする。
 
-    索引は tools/build_tile_index.py が作る陸域の z12 タイル一覧。
-    配信されていないタイルは 404 になるので飛ばし、空の .missing を置いて
-    次の実行では叩かない（索引の7割あまりが 404 になる）。
+    取りに行くのは tools/tile_list_z12.csv に載った実在するタイルだけ
+    （一覧は tools/build_tile_list.py が作る）。取得済みのタイルは飛ばす。
     """
-    with TILE_INDEX.open(encoding="utf-8") as handle:
-        tiles = [(int(row["x"]), int(row["y"])) for row in csv.DictReader(handle)]
-
-    logger.info("tile index: %d tiles x %d layers", len(tiles), len(TILE_LAYERS))
-
+    with TILE_LIST.open(encoding="utf-8") as handle:
+        tiles = [(row["layer"], int(row["x"]), int(row["y"])) for row in csv.DictReader(handle)]
     for layer in TILE_LAYERS:
-        directory = TILE_DIR / layer
-        directory.mkdir(parents=True, exist_ok=True)
-        found = 0
-        for x, y in tiles:
-            path = directory / f"{x}_{y}.geojson"
-            missing = path.with_suffix(".missing")
-            if path.exists():
-                found += 1
-                continue
-            if missing.exists():
-                continue
-            body = _fetch(TILE_URL.format(layer=layer, z=TILE_ZOOM, x=x, y=y))
-            time.sleep(REQUEST_SLEEP)
-            if body is None:
-                missing.touch()
-                continue
-            _write_atomic(path, body)
-            found += 1
-        logger.info("%s: %d tiles", layer, found)
+        (TILE_DIR / layer).mkdir(parents=True, exist_ok=True)
+
+    pending = [
+        (layer, x, y)
+        for layer, x, y in tiles
+        if not (TILE_DIR / layer / f"{x}_{y}.geojson").exists()
+    ]
+    logger.info("tiles: %d listed, %d to download", len(tiles), len(pending))
+
+    missing = []
+    with ThreadPoolExecutor(max_workers=TILE_WORKERS) as pool:
+        for done, (tile, found) in enumerate(zip(pending, pool.map(_download_tile, pending)), 1):
+            if not found:
+                missing.append(tile)
+            if done % 1000 == 0:
+                logger.info("tiles: %d / %d", done, len(pending))
+
+    # 一覧にあるのに配信されていなければ、配信元のタイルが入れ替わっている。
+    # 形状の欠けは dbt のテスト（road_geometry_coverage）が割合で見る
+    if missing:
+        logger.warning("tiles: %d listed tiles were not found: %s", len(missing), missing[:5])
+    logger.info("tiles: done")
 
 
 def build_geometry_parquet() -> None:

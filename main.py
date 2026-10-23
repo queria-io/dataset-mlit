@@ -34,9 +34,13 @@ def dbt_build():
 
 
 def main():
+    # dbt を import した時点で、依存先の snowplow_tracker が basicConfig() を呼んでルートロガーに
+    # ハンドラを付ける（ルートは WARNING のまま）。後から呼ぶ basicConfig は効かないので、force で付け直す。
+    # 付け直さないと INFO が捨てられ、CI のログに進み具合が出ない
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        force=True,
     )
 
     download_kasho()
