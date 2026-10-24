@@ -30,6 +30,7 @@ keywords:
   - GIS
 homepage: https://github.com/queria-io/dataset-mlit
 language: ja
+themes: [transport_tourism]
 
 licenses:
   - JP-PDL-1.0
