@@ -1,0 +1,4 @@
+schema: real_estate
+name: raw_price_index_residential
+description: 不動産価格指数（住宅）の Excel を縦持ちにした中間テーブル。
+published: false

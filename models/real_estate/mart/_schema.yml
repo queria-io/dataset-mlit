@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: price_index_residential
+    description: |
+      不動産価格指数（住宅）。1行 = 地域 × 季節調整の別 × 用途 × 月。
+      2010年平均を100とする指数で、2008年4月から。
+
+      出典: 「不動産価格指数」（国土交通省）を加工して作成。
+    access: public
+
+  - name: price_index_commercial
+    description: |
+      不動産価格指数（商業用不動産）。1行 = 地域 × 季節調整の別 × 用途 × 四半期。
+      2010年平均を100とする指数で、2008年第2四半期から。
+
+      出典: 「不動産価格指数」（国土交通省）を加工して作成。
+    access: public

@@ -24,3 +24,4 @@ data/parquet/
 *.duckdb
 dist/
 data/*.log
+data/xlsx/

@@ -18,3 +18,8 @@ models:
         +materialized: table
       mart:
         +materialized: table
+    real_estate:
+      raw:
+        +materialized: table
+      mart:
+        +materialized: table
