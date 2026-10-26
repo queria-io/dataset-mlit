@@ -5,7 +5,8 @@
 3. tiles:       区間形状の GeoJSON タイルの取得
 4. geometry:    タイルを交通調査基本区間ごとにまとめて Parquet 化
 5. price_index: 不動産価格指数（住宅・商業用不動産）の取得と Parquet 化
-6. dbt:         dbt ビルド
+6. transaction_volume: 不動産取引件数・面積の取得と Parquet 化
+7. dbt:         dbt ビルド
 """
 
 import logging
@@ -18,6 +19,10 @@ from pipelines.traffic_census import (
     download_jikantai,
     download_kasho,
     download_tiles,
+)
+from pipelines.transaction_volume import (
+    build_transaction_volume_parquet,
+    download_transaction_volume,
 )
 
 logger = logging.getLogger("pipelines")
@@ -51,6 +56,8 @@ def main():
     build_geometry_parquet()
     download_price_index()
     build_price_index_parquet()
+    download_transaction_volume()
+    build_transaction_volume_parquet()
     dbt_build()
 
 

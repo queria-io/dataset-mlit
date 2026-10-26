@@ -1,0 +1,92 @@
+schema: real_estate
+name: transaction_volume
+title: 不動産取引件数・面積
+description: >
+  国土交通省が不動産価格指数とあわせて毎月公表する不動産取引件数・面積。所有権移転登記をもとに、
+  土地と建物を一緒に取引したものの件数と面積を、用途別・取引主体別に月ごとに集計したもの。
+  1行 = 地域 × 用途 × 月で、2008年4月から収録する。主に中古の取引が対象。
+
+  用途は戸建住宅・マンション（区分所有）・店舗・オフィス・倉庫・工場・マンション・アパート（一棟）の7区分。
+  地域は全国、地方ブロック9区分（北海道〜九州・沖縄）、都市圏3区分（南関東圏・名古屋圏・京阪神圏）、
+  東京都・愛知県・大阪府の16区分で、region_code は不動産価格指数（住宅）の地域番号と同じ。
+  上位の地域と下位の地域が同じ表に並ぶので、合計を取るときは地域の階層をまたがないように絞る。
+  公表資料が空欄の月は行が無い。
+
+  件数は建物の移転登記と土地の移転登記を突き合わせられたものだけを数えており、
+  既存住宅販売量指数の販売量とは別物。取引から約3か月後に公表し、公表後3か月は改訂される。
+  取引主体別の4区分（個人→個人 など。矢印は売り手→買い手）を足しても取引件数にわずかに届かない。
+
+  出典: 「不動産取引件数・面積」（国土交通省）
+  https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html を加工して作成。
+keywords:
+  - 不動産取引件数
+  - 不動産取引面積
+  - 取引件数
+  - 所有権移転登記
+  - 中古住宅
+  - 中古マンション
+  - オフィス
+  - 店舗
+  - 倉庫
+  - 工場
+  - 法人
+  - 不動産
+published: true
+sources:
+  - path: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
+fields:
+  - name: region_code
+    title: 地域番号
+    description: 公表資料の地域番号。1=全国、2-1〜2-9=地方ブロック、3-1〜3-3=都市圏、4-1〜4-3=都府県
+  - name: region_name
+    title: 地域名
+  - name: prefecture_code
+    title: 都道府県コード
+    description: 2桁。東京都・愛知県・大阪府の行だけに入り、それ以外の地域は NULL
+    semantic: { role: entity, name: prefecture }
+  - name: category
+    title: 用途
+    description: 戸建住宅 / マンション(区分所有) / 店舗 / オフィス / 倉庫 / 工場 / マンション・アパート(一棟)
+  - name: period_start
+    title: 対象月
+    description: 対象月の1日
+  - name: year
+    title: 年
+  - name: month
+    title: 月
+  - name: transaction_count
+    title: 取引件数
+  - name: transaction_count_change_rate
+    title: 取引件数の対前年同月比（%）
+    description: 公表資料の値。2008年4月〜2009年3月は比べる月が無いので NULL
+  - name: count_individual_to_individual
+    title: 取引件数（個人→個人）
+    description: 売り手が個人、買い手が個人の取引の件数
+  - name: count_individual_to_corporation
+    title: 取引件数（個人→法人）
+    description: 売り手が個人、買い手が法人の取引の件数
+  - name: count_corporation_to_individual
+    title: 取引件数（法人→個人）
+    description: 売り手が法人、買い手が個人の取引の件数
+  - name: count_corporation_to_corporation
+    title: 取引件数（法人→法人）
+    description: 売り手が法人、買い手が法人の取引の件数
+  - name: count_corporate_net_purchase
+    title: 法人の売買動向（件数）
+    description: 法人が買った件数から売った件数を引いたもの（公表資料の値）。正なら法人の買い越し
+  - name: transaction_area
+    title: 取引面積（㎡）
+  - name: transaction_area_change_rate
+    title: 取引面積の対前年同月比（%）
+    description: 公表資料の値。2008年4月〜2009年3月は比べる月が無いので NULL
+  - name: area_individual_to_individual
+    title: 取引面積（個人→個人、㎡）
+  - name: area_individual_to_corporation
+    title: 取引面積（個人→法人、㎡）
+  - name: area_corporation_to_individual
+    title: 取引面積（法人→個人、㎡）
+  - name: area_corporation_to_corporation
+    title: 取引面積（法人→法人、㎡）
+  - name: area_corporate_net_purchase
+    title: 法人の売買動向（面積、㎡）
+    description: 法人が買った面積から売った面積を引いたもの（公表資料の値）。正なら法人の買い越し

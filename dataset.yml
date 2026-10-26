@@ -12,8 +12,10 @@ description: |-
   あわせて、国土交通省 不動産・建設経済局が毎月公表する「不動産価格指数」を収録する。
   住宅（全国・地方ブロック・都市圏・東京都・愛知県・大阪府、月次）と
   商業用不動産（全国・三大都市圏など、四半期）の指数を、2008年4月から持つ。
+  同じく毎月公表する「不動産取引件数・面積」から、戸建住宅・マンション・店舗・オフィスなど
+  用途別・取引主体別の月次の取引件数と面積も2008年4月から持つ。
   出典：「令和3年度全国道路・街路交通情勢調査 一般交通量調査」（国土交通省）、
-  「不動産価格指数」（国土交通省）を加工して作成。
+  「不動産価格指数」（国土交通省）、「不動産取引件数・面積」（国土交通省）を加工して作成。
   提供情報の最新性、正確性、完全性等が保証されたものではありません。
 keywords:
   - 道路交通センサス
@@ -35,6 +37,7 @@ keywords:
   - 不動産価格指数
   - 住宅価格
   - 商業用不動産
+  - 不動産取引件数
 homepage: https://github.com/queria-io/dataset-mlit
 language: ja
 themes: [transport_tourism, housing_land]
@@ -46,6 +49,8 @@ sources:
   - title: 令和3年度 全国道路・街路交通情勢調査 一般交通量調査（国土交通省）
     path: https://www.mlit.go.jp/road/census/r3/
   - title: 不動産価格指数（国土交通省）
+    path: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
+  - title: 不動産取引件数・面積（国土交通省）
     path: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
 
 contributors:
@@ -62,4 +67,4 @@ schemas:
   - name: road
     title: 道路
   - name: real_estate
-    title: 不動産価格
+    title: 不動産価格・取引件数
