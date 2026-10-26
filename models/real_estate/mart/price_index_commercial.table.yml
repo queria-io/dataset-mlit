@@ -1,0 +1,62 @@
+schema: real_estate
+name: price_index_commercial
+title: 不動産価格指数（商業用不動産）
+description: >
+  国土交通省が公表する不動産価格指数（商業用不動産）。取引価格情報をもとに、店舗・オフィス・倉庫・工場・
+  マンション・アパート（一棟）といった建物付土地と、商業地・工業地の土地の価格の動きを、
+  2010年平均を100とする指数にしたもの。1行 = 地域 × 季節調整の別 × 用途 × 四半期で、
+  2008年第2四半期から収録する。
+
+  地域は全国・三大都市圏・三大都市圏以外の地域・南関東圏の4区分。南関東圏は倉庫・工場を
+  サンプル数が少ないため公表しておらず、商業用不動産総合・建物付土地総合も無い。
+  店舗・オフィス・マンション・アパート（一棟）・土地総合・商業地・工業地の6用途だけを持つ。
+
+  季節調整値と原系列の2系統を adjustment で分けて持つ。変化率の比べ方は系統で違い、
+  季節調整値は前期比、原系列は前年同期比（change_basis）。
+
+  出典: 「不動産価格指数」（国土交通省）
+  https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html を加工して作成。
+keywords:
+  - 不動産価格指数
+  - 商業用不動産
+  - オフィス
+  - 店舗
+  - 倉庫
+  - 商業地
+  - 工業地
+  - 不動産
+published: true
+sources:
+  - path: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
+fields:
+  - name: region_code
+    title: 地域番号
+    description: 公表資料の地域番号。1=全国、2-1=三大都市圏、2-2=三大都市圏以外の地域、2-3=南関東圏。住宅の表の地域番号とは対応しない
+  - name: region_name
+    title: 地域名
+  - name: adjustment
+    title: 季節調整の別
+    description: 季節調整 / 原系列
+  - name: category
+    title: 用途
+    description: 商業用不動産総合 / 建物付土地総合 / 店舗 / オフィス / 倉庫 / 工場 / マンション・アパート(一棟) / 土地総合 / 商業地 / 工業地
+  - name: period_start
+    title: 対象四半期の初日
+    description: 第1四半期（1〜3月）は1月1日
+  - name: year
+    title: 年
+  - name: quarter
+    title: 四半期
+    description: 1〜4。暦年の四半期（第1四半期 = 1〜3月）
+  - name: price_index
+    title: 不動産価格指数
+    description: 2010年平均 = 100
+  - name: change_basis
+    title: 変化率の比べ方
+    description: 対前期比（季節調整値）/ 対前年同期比（原系列）
+  - name: change_rate
+    title: 変化率（%）
+    description: 公表資料の値。系列の最初の期など、比べる期が無いときは NULL
+  - name: sample_count
+    title: サンプル数
+    description: 指数の算出に使った取引の件数

@@ -1,16 +1,18 @@
-"""道路交通センサスのデータパイプライン。
+"""国土交通省のデータパイプライン。
 
-1. kasho:    箇所別基本表の取得（47都道府県）
-2. jikantai: 時間帯別交通量表の取得（47都道府県）
-3. tiles:    区間形状の GeoJSON タイルの取得
-4. geometry: タイルを交通調査基本区間ごとにまとめて Parquet 化
-5. dbt:      dbt ビルド
+1. kasho:       道路交通センサス 箇所別基本表の取得（47都道府県）
+2. jikantai:    道路交通センサス 時間帯別交通量表の取得（47都道府県）
+3. tiles:       区間形状の GeoJSON タイルの取得
+4. geometry:    タイルを交通調査基本区間ごとにまとめて Parquet 化
+5. price_index: 不動産価格指数（住宅・商業用不動産）の取得と Parquet 化
+6. dbt:         dbt ビルド
 """
 
 import logging
 
 from dbt.cli.main import dbtRunner
 
+from pipelines.price_index import build_price_index_parquet, download_price_index
 from pipelines.traffic_census import (
     build_geometry_parquet,
     download_jikantai,
@@ -47,6 +49,8 @@ def main():
     download_jikantai()
     download_tiles()
     build_geometry_parquet()
+    download_price_index()
+    build_price_index_parquet()
     dbt_build()
 
 

@@ -1,0 +1,64 @@
+schema: real_estate
+name: price_index_residential
+title: 不動産価格指数（住宅）
+description: >
+  国土交通省が毎月公表する不動産価格指数（住宅）。年間約30万件の不動産の取引価格情報をもとに、
+  住宅総合・住宅地・戸建住宅・マンション（区分所有）の価格の動きを、2010年平均を100とする指数にしたもの。
+  1行 = 地域 × 季節調整の別 × 用途 × 月で、2008年4月から収録する。
+
+  地域は全国、地方ブロック9区分（北海道〜九州・沖縄）、都市圏3区分（南関東圏・名古屋圏・京阪神圏）、
+  東京都・愛知県・大阪府の16区分。region_code は公表資料の地域番号（1, 2-1, 3-1, 4-1 など）で、
+  上位の地域と下位の地域が同じ表に並ぶ。合計や平均を取るときは地域の階層をまたがないように絞る。
+
+  季節調整値と原系列の2系統を adjustment で分けて持つ。変化率の比べ方は系統で違い、
+  季節調整値は前月比、原系列は前年同月比（change_basis）。
+  サンプル数が少ない地域・用途は月ごとの振れが大きい。
+
+  出典: 「不動産価格指数」（国土交通省）
+  https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html を加工して作成。
+keywords:
+  - 不動産価格指数
+  - 住宅価格
+  - マンション価格
+  - 戸建住宅
+  - 住宅地
+  - 地価
+  - 不動産
+published: true
+sources:
+  - path: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
+fields:
+  - name: region_code
+    title: 地域番号
+    description: 公表資料の地域番号。1=全国、2-1〜2-9=地方ブロック、3-1〜3-3=都市圏、4-1〜4-3=都府県
+  - name: region_name
+    title: 地域名
+  - name: prefecture_code
+    title: 都道府県コード
+    description: 2桁。東京都・愛知県・大阪府の行だけに入り、それ以外の地域は NULL
+    semantic: { role: entity, name: prefecture }
+  - name: adjustment
+    title: 季節調整の別
+    description: 季節調整 / 原系列
+  - name: category
+    title: 用途
+    description: 住宅総合 / 住宅地 / 戸建住宅 / マンション(区分所有)
+  - name: period_start
+    title: 対象月
+    description: 対象月の1日
+  - name: year
+    title: 年
+  - name: month
+    title: 月
+  - name: price_index
+    title: 不動産価格指数
+    description: 2010年平均 = 100
+  - name: change_basis
+    title: 変化率の比べ方
+    description: 対前月比（季節調整値）/ 対前年同月比（原系列）
+  - name: change_rate
+    title: 変化率（%）
+    description: 公表資料の値。系列の最初の月など、比べる月が無いときは NULL
+  - name: sample_count
+    title: サンプル数
+    description: 指数の算出に使った取引の件数

@@ -1,0 +1,4 @@
+schema: real_estate
+name: raw_price_index_commercial
+description: 不動産価格指数（商業用不動産）の Excel を縦持ちにした中間テーブル。
+published: false
