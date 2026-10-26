@@ -1,0 +1,4 @@
+schema: real_estate
+name: raw_transaction_volume
+description: 不動産取引件数・面積の Excel を縦持ちにした中間テーブル。
+published: false

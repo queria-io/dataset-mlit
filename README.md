@@ -19,6 +19,8 @@
   全国・地方ブロック・都市圏・東京都・愛知県・大阪府の月次の指数です。1シートが1地域で、季節調整値と原系列をシートで分けています。
 - 不動産価格指数（商業用不動産）:
   全国・三大都市圏・三大都市圏以外の地域・南関東圏の四半期の指数です。シートの分け方は住宅と同じです。
+- 不動産取引件数・面積:
+  所有権移転登記をもとにした、用途別・取引主体別の月次の取引件数と取引面積です。地域の区分とシートの分け方は住宅の指数と同じです。
 
 ## スキーマ: road
 
@@ -143,11 +145,34 @@
 取り込むのは国土交通省が集計する2008年4月（商業用は2008年第2四半期）以降です。住宅の都府県シートにある2008年3月以前の系列と、
 商業用の都府県シート（1984年からの年次）は、国土交通省のほかに各都府県の不動産鑑定士協会を出典として明示するよう注記がある系列なので取り込んでいません。
 
+### テーブル: transaction_volume
+
+不動産取引件数・面積です。1行 = 地域 × 用途 × 月で、2008年4月から収録します。
+
+- region_code: 地域番号（VARCHAR、price_index_residential と同じ。1=全国、2-1〜2-9=地方ブロック、3-1〜3-3=都市圏、4-1〜4-3=都府県）
+- region_name: 地域名（VARCHAR）
+- prefecture_code: 都道府県コード（VARCHAR、2桁。東京都・愛知県・大阪府の行だけに入る）
+- category: 用途（VARCHAR、戸建住宅／マンション(区分所有)／店舗／オフィス／倉庫／工場／マンション・アパート(一棟)）
+- period_start: 対象月（DATE、その月の1日）
+- year / month: 年・月（INTEGER）
+- transaction_count: 取引件数（INTEGER）
+- transaction_count_change_rate: 取引件数の対前年同月比（DOUBLE、%。2008年4月〜2009年3月は NULL）
+- count_individual_to_individual / count_individual_to_corporation / count_corporation_to_individual / count_corporation_to_corporation: 取引主体別の件数（INTEGER、売り手→買い手。個人→個人・個人→法人・法人→個人・法人→法人）
+- count_corporate_net_purchase: 法人の売買動向（INTEGER、法人の買い − 売りの件数。公表資料の値）
+- transaction_area: 取引面積（DOUBLE、㎡）
+- transaction_area_change_rate: 取引面積の対前年同月比（DOUBLE、%。2008年4月〜2009年3月は NULL）
+- area_individual_to_individual / area_individual_to_corporation / area_corporation_to_individual / area_corporation_to_corporation: 取引主体別の面積（DOUBLE、㎡）
+- area_corporate_net_purchase: 法人の売買動向（DOUBLE、法人の買い − 売りの面積、㎡）
+
+件数は建物の移転登記と土地の移転登記を突き合わせられた取引だけを数えたもので、主に中古が対象です。
+既存住宅販売量指数の販売量とは一致しません。取引から約3か月後に公表され、公表後3か月は改訂されます。
+取引主体別の4区分を足しても取引件数にわずかに届きません。公表資料が空欄の月（地方ブロックの小さい用途など）は行がありません。
+
 ## データ更新手順
 
 main.py が箇所別基本表と時間帯別交通量表の CSV（47都道府県分）と区間形状の GeoJSON タイルを取得し、
 タイルを区間ごとにまとめて Parquet にする。続けて不動産価格指数のページから「最新データ」の Excel の URL を資料名で引いて取得し、
-シートごとの横持ちの表を縦持ちの Parquet にする。そのうえで dbt build で各テーブルを再生成する。
+シートごとの横持ちの表を縦持ちの Parquet にする。不動産取引件数・面積も同じページから資料名で Excel を引き、同じように縦持ちにする。そのうえで dbt build で各テーブルを再生成する。
 ビルドは `bash scripts/build.sh` で実行する（Queria に公開する）。
 
 タイルは配信元がディレクトリ一覧を返さないので、どのタイルがあるかを2段階で調べてリポジトリに置いている。
@@ -160,13 +185,15 @@ main.py が箇所別基本表と時間帯別交通量表の CSV（47都道府県
 ## ライセンス
 
 国土交通省ウェブサイトのコンテンツに準拠する[公共データ利用規約（第1.0版）（PDL1.0）](https://www.mlit.go.jp/link.html)に従う。
-道路交通センサス・可視化ツール・不動産価格指数は、同規約の[適用除外となるコンテンツの一覧](https://www.mlit.go.jp/page/kanbo01_hy_003657.html)に含まれていない。
+道路交通センサス・可視化ツール・不動産価格指数・不動産取引件数・面積は、同規約の[適用除外となるコンテンツの一覧](https://www.mlit.go.jp/page/kanbo01_hy_003657.html)に含まれていない。
 
 出典:
 「令和3年度全国道路・街路交通情勢調査 一般交通量調査」（国土交通省）（https://www.mlit.go.jp/road/census/r3/）を加工して作成。
 「不動産価格指数」（国土交通省）（https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html）を加工して作成。
+「不動産取引件数・面積」（国土交通省）（https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html）を加工して作成。
 
 箇所別基本表の列を英語名へ付け替えてコードに名称を付ける加工、時間帯別交通量表を時間帯ごとの縦持ちへ組み替える加工、
 可視化ツールのタイルを区間ごとの形状にまとめて箇所別基本表へ結び付ける加工を行っている。
 不動産価格指数は、Excel の地域ごとのシートを1つの表に縦持ちでまとめ、2008年3月以前の系列を除く加工を行っている。
+不動産取引件数・面積は、Excel の地域ごとのシートを1つの表に縦持ちでまとめる加工を行っている。
 交通量・指数などの値そのものは改変していない。
