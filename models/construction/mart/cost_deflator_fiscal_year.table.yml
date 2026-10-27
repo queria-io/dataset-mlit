@@ -1,0 +1,57 @@
+schema: construction
+name: cost_deflator_fiscal_year
+title: 建設工事費デフレーター（年度次）
+description: >
+  国土交通省が公表する建設工事費デフレーターの年度の値。建設工事の名目の工事費を、
+  2020年度の価格で測った実質額に直すための指数で、2020年度平均を100とする。
+  1行 = 工事種類 × 年度で、1951年度から収録する。
+
+  工事種類と階層は月次（cost_deflator_monthly）と同じ75系列。
+  古い年度ほど公表されている系列が少ない。1951〜1959年度は治水・道路・公園・下水道などの土木の一部だけで、
+  建設総合は1960年度から、構造別・用途別の15系列は1990年度から、建築補修は2015年度から。
+  公表されていない年度の行は無い。
+
+  名目額をこの指数で割って100を掛けると、2020年度価格の実質額になる。
+  2023年度以降の暫定ウエイトを使った年度は is_provisional が true。
+  ウエイトは2022年度までは各年度の建設投資の実績、2023年度以降は2020〜2022年度の平均を暫定的に使っている。
+  営業余剰や消費税などの間接税はウエイトに含まない。用地費と補償費は対象外。
+
+  出典: 「建設工事費デフレーター」（国土交通省）
+  https://www.mlit.go.jp/statistics/details/t-other-2_tk_000362.html を加工して作成。
+keywords:
+  - 建設工事費デフレーター
+  - 建設工事費
+  - デフレーター
+  - 実質化
+  - 建設投資
+  - 物価指数
+  - 建築
+  - 土木
+  - 公共事業
+published: true
+sources:
+  - path: https://www.mlit.go.jp/statistics/details/t-other-2_tk_000362.html
+fields:
+  - name: category_order
+    title: 工事種類の並び順
+    description: 公表資料の列の順（1〜75）。1=建設総合で、括りの下に内訳が続く
+  - name: category
+    title: 工事種類
+    description: 公表資料の見出しの名前。住宅と非住宅の両方に「鉄筋RC」があるように、名前だけでは一意にならない
+  - name: category_path
+    title: 工事種類の括り
+    description: 上の括りから順に「 > 」でつないだもの（建設総合 > 建築総合 > 住宅総合 など）。この列で一意
+  - name: parent_category
+    title: 一つ上の括り
+    description: 最上位の建設総合と、構造別・用途別の15系列は NULL
+  - name: level
+    title: 括りの深さ
+    description: 1=建設総合と構造別・用途別の15系列、2=建築総合・建築補修・土木総合で、内訳ほど大きい
+  - name: fiscal_year
+    title: 年度
+  - name: is_provisional
+    title: 暫定値か
+    description: 公表資料で「（暫定）」が付いた年度は true
+  - name: deflator
+    title: 建設工事費デフレーター
+    description: 2020年度平均 = 100
