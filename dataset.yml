@@ -1,6 +1,6 @@
 spec_version: "0.1"
 name: mlit
-title: 国土交通省 道路交通センサス・不動産価格指数・建設工事費デフレーター
+title: 国土交通省 道路交通センサス・不動産価格指数・建設工事費デフレーター・公共工事設計労務単価
 description: |-
   国土交通省 道路局が公表する「全国道路・街路交通情勢調査（道路交通センサス）一般交通量調査」。
   全国の道路を交通調査基本区間に区切り、区間ごとの昼間12時間・24時間交通量、大型車混入率、
@@ -15,8 +15,11 @@ description: |-
   さらに、国土交通省 総合政策局が毎月公表する「建設工事費デフレーター」を収録する。
   建設工事の名目の工事費を2020年度価格の実質額に直す指数で、建築・土木の工事種類75系列を
   月次（2016年4月から）と年度次（1951年度から）で持つ。
+  公共工事の積算に使う「公共工事設計労務単価」も収録する。47都道府県 × 51職種の日額単価を、
+  2012年度の単価から改定ごとに持つ。
   出典：「令和3年度全国道路・街路交通情勢調査 一般交通量調査」（国土交通省）、
-  「不動産価格指数」（国土交通省）、「建設工事費デフレーター」（国土交通省）を加工して作成。
+  「不動産価格指数」（国土交通省）、「建設工事費デフレーター」（国土交通省）、
+  「公共工事設計労務単価」（国土交通省）を加工して作成。
   提供情報の最新性、正確性、完全性等が保証されたものではありません。
 keywords:
   - 道路交通センサス
@@ -40,6 +43,8 @@ keywords:
   - 商業用不動産
   - 建設工事費デフレーター
   - 建設工事費
+  - 公共工事設計労務単価
+  - 労務単価
 homepage: https://github.com/queria-io/dataset-mlit
 language: ja
 themes: [transport_tourism, housing_land]
@@ -54,6 +59,8 @@ sources:
     path: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
   - title: 建設工事費デフレーター（国土交通省）
     path: https://www.mlit.go.jp/statistics/details/t-other-2_tk_000362.html
+  - title: 公共工事設計労務単価（国土交通省）
+    path: https://www.mlit.go.jp/totikensangyo/const/1_6_bt_000217.html
 
 contributors:
   - title: 国土交通省
@@ -71,4 +78,4 @@ schemas:
   - name: real_estate
     title: 不動産価格
   - name: construction
-    title: 建設工事費
+    title: 建設工事費・労務単価

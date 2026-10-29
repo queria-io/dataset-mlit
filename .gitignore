@@ -25,3 +25,4 @@ data/parquet/
 dist/
 data/*.log
 data/xlsx/
+data/pdf/
