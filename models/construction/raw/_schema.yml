@@ -10,3 +10,8 @@ models:
     description: >
       建設工事費デフレーター（年度次）の Excel を、パイプラインが縦持ちにした Parquet。
       1行 = 工事種類 × 年度。
+
+  - name: raw_design_labor_unit_price
+    description: >
+      公共工事設計労務単価の記者発表 PDF の単価表を、パイプラインが縦持ちにした Parquet。
+      1行 = 適用開始月 × 都道府県 × 職種。
