@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: raw_cost_deflator_monthly
+    description: >
+      建設工事費デフレーター（月次）の Excel を、パイプラインが縦持ちにした Parquet。
+      1行 = 工事種類 × 月。
+
+  - name: raw_cost_deflator_fiscal_year
+    description: >
+      建設工事費デフレーター（年度次）の Excel を、パイプラインが縦持ちにした Parquet。
+      1行 = 工事種類 × 年度。
