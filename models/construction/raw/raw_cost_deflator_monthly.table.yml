@@ -1,0 +1,4 @@
+schema: construction
+name: raw_cost_deflator_monthly
+description: 建設工事費デフレーター（月次）の Excel を縦持ちにした中間テーブル。
+published: false

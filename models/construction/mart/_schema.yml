@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: cost_deflator_monthly
+    description: |
+      建設工事費デフレーター（月次）。1行 = 工事種類 × 月。
+      2020年度平均を100とする指数で、2016年4月から。
+
+      出典: 「建設工事費デフレーター」（国土交通省）を加工して作成。
+    access: public
+
+  - name: cost_deflator_fiscal_year
+    description: |
+      建設工事費デフレーター（年度次）。1行 = 工事種類 × 年度。
+      2020年度平均を100とする指数で、1951年度から。
+
+      出典: 「建設工事費デフレーター」（国土交通省）を加工して作成。
+    access: public

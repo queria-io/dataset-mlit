@@ -1,0 +1,4 @@
+schema: construction
+name: raw_cost_deflator_fiscal_year
+description: 建設工事費デフレーター（年度次）の Excel を縦持ちにした中間テーブル。
+published: false

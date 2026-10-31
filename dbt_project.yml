@@ -23,3 +23,8 @@ models:
         +materialized: table
       mart:
         +materialized: table
+    construction:
+      raw:
+        +materialized: table
+      mart:
+        +materialized: table

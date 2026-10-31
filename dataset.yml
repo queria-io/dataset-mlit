@@ -1,6 +1,6 @@
 spec_version: "0.1"
 name: mlit
-title: 国土交通省 道路交通センサス・不動産価格指数
+title: 国土交通省 道路交通センサス・不動産価格指数・建設工事費デフレーター
 description: |-
   国土交通省 道路局が公表する「全国道路・街路交通情勢調査（道路交通センサス）一般交通量調査」。
   全国の道路を交通調査基本区間に区切り、区間ごとの昼間12時間・24時間交通量、大型車混入率、
@@ -11,11 +11,14 @@ description: |-
   調査は5年周期で、収録は令和3年度（2021年）調査。
   あわせて、国土交通省 不動産・建設経済局が毎月公表する「不動産価格指数」を収録する。
   住宅（全国・地方ブロック・都市圏・東京都・愛知県・大阪府、月次）と
-  商業用不動産（全国・三大都市圏など、四半期）の指数を、2008年4月から持つ。
   同じく毎月公表する「不動産取引件数・面積」から、戸建住宅・マンション・店舗・オフィスなど
   用途別・取引主体別の月次の取引件数と面積も2008年4月から持つ。
+  さらに、国土交通省 総合政策局が毎月公表する「建設工事費デフレーター」を収録する。
+  建設工事の名目の工事費を2020年度価格の実質額に直す指数で、建築・土木の工事種類75系列を
+  月次（2016年4月から）と年度次（1951年度から）で持つ。
   出典：「令和3年度全国道路・街路交通情勢調査 一般交通量調査」（国土交通省）、
-  「不動産価格指数」（国土交通省）、「不動産取引件数・面積」（国土交通省）を加工して作成。
+  「不動産価格指数」（国土交通省）、「不動産取引件数・面積」（国土交通省）、
+  「建設工事費デフレーター」（国土交通省）を加工して作成。
   提供情報の最新性、正確性、完全性等が保証されたものではありません。
 keywords:
   - 道路交通センサス
@@ -38,6 +41,8 @@ keywords:
   - 住宅価格
   - 商業用不動産
   - 不動産取引件数
+  - 建設工事費デフレーター
+  - 建設工事費
 homepage: https://github.com/queria-io/dataset-mlit
 language: ja
 themes: [transport_tourism, housing_land]
@@ -52,13 +57,15 @@ sources:
     path: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
   - title: 不動産取引件数・面積（国土交通省）
     path: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
+  - title: 建設工事費デフレーター（国土交通省）
+    path: https://www.mlit.go.jp/statistics/details/t-other-2_tk_000362.html
 
 contributors:
   - title: 国土交通省
     path: https://www.mlit.go.jp/
     roles: [rightsHolder]
 
-temporal_coverage: { start: "2008", end: null }
+temporal_coverage: { start: "1951", end: null }
 spatial_coverage: [JP]
 update_frequency: irregular
 cover: 🚗
@@ -68,3 +75,5 @@ schemas:
     title: 道路
   - name: real_estate
     title: 不動産価格・取引件数
+  - name: construction
+    title: 建設工事費
