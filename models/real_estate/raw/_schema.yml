@@ -10,3 +10,8 @@ models:
     description: >
       不動産価格指数（商業用不動産）の Excel を、パイプラインが縦持ちにした Parquet。
       1行 = 地域 × 季節調整の別 × 用途 × 四半期。
+
+  - name: raw_transaction_volume
+    description: >
+      不動産取引件数・面積の Excel を、パイプラインが縦持ちにした Parquet。
+      1行 = 地域 × 用途 × 月。
