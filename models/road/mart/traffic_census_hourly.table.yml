@@ -1,22 +1,11 @@
 schema: road
 name: traffic_census_hourly
 title: 道路交通センサス 時間帯別交通量
-description: >
-  令和3年度 全国道路・街路交通情勢調査（道路交通センサス）一般交通量調査の
-  時間帯別交通量。1行 = 調査単位区間 × 上下 × 車種 × 時間帯で、
-  7時台から翌6時台までの24時間分を縦持ちにしたもの。
+description: |-
+  道路交通センサス（令和3年度）の時間帯別交通量です。1 行が 1 調査単位区間・上下・車種・時間帯で、7 時台から翌 6 時台までの 24 時間分です。
 
-  区間の単位は交通調査基本区間ではなく、それを集約した交通量調査単位区間。
-  traffic_census_section とは (traffic_pref_city_code, traffic_survey_unit_id) =
-  (pref_city_code, survey_unit_id) で結合する。結合すると1つの観測値が複数の基本区間に付くため、
-  区間をまたいで合計すると二重に数えることになる。合計はこの表の単位のまま行う。
-
-  昼間12時間交通量は 7時台〜18時台の合計にあたる（is_daytime_12h）。
-  時刻順の並べ替えは hour ではなく hour_order（7時台が0）を使う。
-  観測を行っていない区間の値は推定値で、observation_type で見分ける。
-
-  出典: 「令和3年度全国道路・街路交通情勢調査 一般交通量調査」（国土交通省）
-  https://www.mlit.go.jp/road/census/r3/ を加工して作成。
+  - `traffic_census_section` とは `(traffic_pref_city_code, traffic_survey_unit_id) = (pref_city_code, survey_unit_id)` で結合します。結合後に区間をまたいで合計すると二重に数えます
+  - 時刻順の並べ替えは `hour_order`（7 時台が 0）を使います
 published: true
 sources:
   - path: https://www.mlit.go.jp/road/census/r3/
@@ -44,10 +33,10 @@ fields:
     description: 観測 / 非観測（推定値）/ データなし（推定不能）
   - name: observation_hours_code
     title: 12時間・24時間観測の別
-    description: 1=12時間観測地点、2=24時間観測地点。非観測で個別調査の観測値も使っていない区間は NULL
+    description: 1=12時間観測地点、2=24時間観測地点
   - name: observation_date
     title: 交通量観測年月日
-    description: YYYYMMDD。機械観測で複数日を使った場合は日が 00。非観測でも個別調査の観測値を使った区間はその調査の日付を持ち、令和3年度より前のことがある。日付の無い区間は NULL
+    description: YYYYMMDD。機械観測で複数日を使った場合は日が 00
   - name: weather
     title: 天候
     description: 晴 / 曇 / 雨 / 霧 / 雪 / 不明。機械観測は不明
