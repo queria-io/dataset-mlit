@@ -26,3 +26,4 @@ dist/
 data/*.log
 data/xlsx/
 data/pdf/
+data/html/

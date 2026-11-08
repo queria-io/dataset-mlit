@@ -1,0 +1,7 @@
+version: 2
+
+models:
+  - name: raw_negative_info
+    description: >
+      ネガティブ情報等検索サイトの事業者の分野の一覧と概要のページを、パイプラインが 1 件 1 行にした Parquet。
+      個人事業主の行も含む。

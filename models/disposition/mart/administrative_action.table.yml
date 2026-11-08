@@ -1,0 +1,98 @@
+schema: disposition
+name: administrative_action
+title: 国土交通省の事業者への行政処分等
+description: |-
+  国土交通省と都道府県が、建設業者・宅地建物取引業者・鉄道事業者・自動車整備事業者など国土交通省所管の事業者に行った行政処分・行政指導・指名停止です。1 行が 1 件の処分等で、処分等年月日・処分等を行った者・処分の種類・根拠法令・違反行為の概要を持ちます。
+
+  - ネガティブ情報等検索サイトに載っているおおむね過去 5 年分です。古い処分は収録していません
+  - 1 つの違反に複数の処分（営業停止と指示など）が出ると、処分ごとに行が分かれます
+  - 法人番号（`corporate_number`）は検索サイトに載っている行だけにあります。法人番号が無く、名前に法人の種類も無い個人事業主の行は収録していません
+  - 自動車運送事業者（バス・トラック・タクシー）と旅行業者の処分は、このテーブルにはありません
+keywords:
+  - 行政処分
+  - ネガティブ情報
+  - 営業停止
+  - 業務停止
+  - 許可取消
+  - 指示処分
+  - 指名停止
+  - 行政指導
+  - 建設業法
+  - 宅地建物取引業法
+  - 建設業者
+  - 宅地建物取引業者
+  - マンション管理業者
+  - 賃貸住宅管理業者
+  - 鉄道事業者
+  - 自動車整備事業者
+  - 法人番号
+  - コンプライアンス
+published: true
+sources:
+  - path: https://www.mlit.go.jp/nega-inf/
+fields:
+  - name: field_code
+    title: 分野コード
+    description: 検索サイトの分野の識別子（kensetugyousya・takuti など）
+    semantic: { role: dimension }
+  - name: sector
+    title: 事業分野
+    description: 建設工事（公共事業を含む）・不動産の売買・管理・旅客運送など
+    semantic: { role: dimension }
+  - name: field
+    title: 事業者の種類
+    description: 建設業者・宅地建物取引業者・指名停止など。指名停止は国土交通省の発注機関による措置
+    semantic: { role: dimension }
+  - name: record_no
+    title: 分野内の番号
+    description: 検索サイトの分野ごとの通し番号。field_code と組で 1 件を表す
+  - name: action_date
+    title: 処分等年月日
+  - name: authority
+    title: 処分等を行った者
+    description: 地方整備局・運輸局・都道府県など。鉄道事業者など検索サイトに載っていない分野は NULL
+    semantic: { role: dimension }
+  - name: name
+    title: 事業者名
+  - name: corporate_number
+    title: 法人番号
+    description: 13桁。検索サイトに載っていない行は NULL
+    semantic: { role: entity, name: corporate_number }
+  - name: license_number
+    title: 許可・登録番号
+    description: 建設業の許可番号や宅地建物取引業者の免許番号など。載っている分野だけ
+  - name: address
+    title: 所在地
+    description: 本社または主たる営業所。市区町村までの行が多い
+  - name: office_name
+    title: 事業場名
+    description: 自動車整備事業者の処分を受けた事業場
+  - name: office_address
+    title: 事業場の所在地
+  - name: action_type
+    title: 処分等の種類
+    description: 許可取消・営業停止・指示・業務停止・指名停止・行政指導など
+    semantic: { role: dimension }
+  - name: action_period
+    title: 処分等の期間
+    description: 停止処分の期間。検索サイトの表記のまま
+  - name: legal_basis
+    title: 根拠法令
+    description: 指名停止は措置要領の該当号
+  - name: licensed_trades
+    title: 許可を受けている建設業の種類
+    description: 建設業者だけ。土・建・大などの略号
+  - name: violation_summary
+    title: 違反行為の概要
+    description: 建設業者は「処分の原因となった事実」
+  - name: action_detail
+    title: 処分の内容
+    description: 建設業者だけ。指示の内容など
+  - name: note
+    title: その他参考となる事項
+    description: 建設業者だけ。報道発表の URL など
+  - name: detail_url
+    title: 詳細のページ
+    description: 処分等を行った者の報道発表などへのリンク
+  - name: source_url
+    title: 検索サイトの概要のページ
