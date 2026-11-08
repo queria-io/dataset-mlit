@@ -28,3 +28,8 @@ models:
         +materialized: table
       mart:
         +materialized: table
+    disposition:
+      raw:
+        +materialized: table
+      mart:
+        +materialized: table

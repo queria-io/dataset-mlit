@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: administrative_action
+    description: |
+      国土交通省所管の事業者への行政処分・行政指導・指名停止。1行 = 1件の処分等。
+      ネガティブ情報等検索サイトに載っているおおむね過去5年分。
+
+      出典: 「ネガティブ情報等検索サイト」（国土交通省）を加工して作成。
+    access: public
