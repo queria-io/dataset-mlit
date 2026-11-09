@@ -1,0 +1,47 @@
+schema: license
+name: real_estate_broker
+title: 宅地建物取引業者
+description: |-
+  宅地建物取引業法に基づく宅地建物取引業の免許を受けている法人の一覧です。国土交通大臣免許と都道府県知事免許の全国分で、1 行が 1 免許です。免許行政庁・免許証番号・商号・本店の所在地を持ちます。
+
+  - 商号に法人の種類（株式会社・有限会社など）が無い行は、個人事業主として収録していません
+  - 免許ではなく届出で宅地建物取引業を営む信託会社等は収録していません
+  - 代表者名は収録していません。法人番号は検索システムに無いため持っていません
+  - 検索システムで判読できない文字（外字）は、私用領域の文字のまま入っています
+keywords:
+  - 宅地建物取引業
+  - 宅建業
+  - 宅建業者
+  - 不動産業者
+  - 免許証番号
+  - 大臣免許
+  - 知事免許
+published: true
+sources:
+  - path: https://etsuran2.mlit.go.jp/TAKKEN/
+fields:
+  - name: license_code
+    title: 免許の識別子
+    description: 免許行政庁の 2 桁（00 は国土交通大臣、01〜47 は都道府県コード、51〜64 は北海道の振興局）と免許証番号の 6 桁をつないだ 8 桁。1 免許で 1 つ
+  - name: license_kind
+    title: 免許の種類
+    description: 大臣（2 つ以上の都道府県に事務所がある）か知事
+    semantic: { role: dimension }
+  - name: authority
+    title: 免許行政庁
+    description: 都道府県名。北海道は「北海道(石狩)」のように振興局まで。大臣免許は「各地方整備局等」
+    semantic: { role: dimension }
+  - name: renewal_count
+    title: 更新回数
+    description: 免許証番号の括弧の数字。5 年ごとの更新で 1 つ増える（1996 年 3 月までは 3 年ごと）。営業の長さの目安になる
+  - name: license_number
+    title: 免許証番号
+    description: 「(17)第000100号」の 6 桁の数字。免許行政庁と組で 1 免許を表す
+  - name: name
+    title: 商号又は名称
+  - name: office_name
+    title: 事務所名
+    description: 本店・本社・主たる事務所など、検索システムの表記のまま
+  - name: address
+    title: 所在地
+    description: 本店の所在地

@@ -33,3 +33,8 @@ models:
         +materialized: table
       mart:
         +materialized: table
+    license:
+      raw:
+        +materialized: table
+      mart:
+        +materialized: table

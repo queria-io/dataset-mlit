@@ -1,0 +1,38 @@
+schema: license
+name: construction_contractor_trade
+title: 建設業の許可業者の業種
+description: |-
+  建設業の許可業者が許可を受けている業種と、一般建設業・特定建設業の区分です。1 行が 1 許可 × 1 業種で、`construction_contractor` と `license_code` で結合できます。
+
+  - 業種は建設業法の 29 業種です。`trade_code` は建設業法別表第一の順の番号です
+  - 1 つの業種で一般と特定の両方を受けることはできないため、許可 × 業種で 1 行です
+keywords:
+  - 建設業
+  - 建設業許可
+  - 業種
+  - 一般建設業
+  - 特定建設業
+  - 土木工事業
+  - 建築工事業
+  - 電気工事業
+  - 管工事業
+  - 解体工事業
+published: true
+sources:
+  - path: https://etsuran2.mlit.go.jp/TAKKEN/
+fields:
+  - name: license_code
+    title: 許可の識別子
+    description: construction_contractor の license_code
+  - name: trade_code
+    title: 業種コード
+    description: 1〜29。1 が土木工事業、29 が解体工事業
+    semantic: { role: dimension }
+  - name: trade
+    title: 業種
+    description: 土木工事業・建築工事業など
+    semantic: { role: dimension }
+  - name: trade_type
+    title: 一般・特定
+    description: 一般（一般建設業）か特定（特定建設業）。特定は元請として大きな額を下請に出せる許可
+    semantic: { role: dimension }

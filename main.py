@@ -9,7 +9,8 @@
 7. deflator:    建設工事費デフレーター（月次・年度次）の取得と Parquet 化
 8. labor:       公共工事設計労務単価の取得と Parquet 化
 9. negative_info: ネガティブ情報等検索サイトの行政処分等の取得と Parquet 化
-10. dbt:        dbt ビルド
+10. license:   建設業者・宅建業者等企業情報検索システムの許可業者の一覧の取得と Parquet 化
+11. dbt:        dbt ビルド
 """
 
 import logging
@@ -24,6 +25,7 @@ from pipelines.labor_unit_price import (
     build_labor_unit_price_parquet,
     download_labor_unit_price,
 )
+from pipelines.license import download_license
 from pipelines.negative_info import build_negative_info_parquet, download_negative_info
 from pipelines.price_index import build_price_index_parquet, download_price_index
 from pipelines.traffic_census import (
@@ -76,6 +78,7 @@ def main():
     build_labor_unit_price_parquet()
     download_negative_info()
     build_negative_info_parquet()
+    download_license()
     dbt_build()
 
 

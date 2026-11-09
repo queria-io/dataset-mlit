@@ -1,0 +1,42 @@
+schema: license
+name: construction_contractor
+title: 建設業の許可業者
+description: |-
+  建設業法に基づく建設業の許可を受けている法人の一覧です。国土交通大臣許可と都道府県知事許可の全国分で、1 行が 1 許可です。許可行政庁・許可番号・商号・主たる営業所の所在地を持ちます。
+
+  - 許可を受けている業種（土木工事業・建築工事業など 29 業種）と一般・特定の区分は `construction_contractor_trade` にあります
+  - 商号に法人の種類（株式会社・有限会社・医療法人など）が無い行は、個人事業主として収録していません。名前に種類の入らない外国法人も、この理由で一部が漏れます
+  - 代表者名は収録していません。法人番号は検索システムに無いため持っていません
+  - 検索システムで判読できない文字（外字）は、私用領域の文字のまま入っています
+keywords:
+  - 建設業
+  - 建設業許可
+  - 許可番号
+  - 建設業者
+  - 大臣許可
+  - 知事許可
+  - 許可業者名簿
+  - 工事業者
+published: true
+sources:
+  - path: https://etsuran2.mlit.go.jp/TAKKEN/
+fields:
+  - name: license_code
+    title: 許可の識別子
+    description: 許可行政庁の 2 桁（00 は国土交通大臣、01〜47 は都道府県コード）と許可番号の 6 桁をつないだ 8 桁。1 許可で 1 つ
+  - name: license_kind
+    title: 許可の種類
+    description: 大臣（2 つ以上の都道府県に営業所がある）か知事
+    semantic: { role: dimension }
+  - name: authority
+    title: 許可行政庁
+    description: 都道府県名。大臣許可は申請を受けた地方整備局等
+    semantic: { role: dimension }
+  - name: license_number
+    title: 許可番号
+    description: 「第000005号」の数字。許可行政庁ごとの番号で、許可行政庁と組で 1 許可を表す
+  - name: name
+    title: 商号又は名称
+  - name: address
+    title: 所在地
+    description: 主たる営業所の所在地
