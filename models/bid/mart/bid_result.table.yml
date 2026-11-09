@@ -1,0 +1,130 @@
+schema: bid
+name: bid_result
+title: 国土交通省の直轄工事・業務の入札結果
+description: |-
+  地方整備局・北海道開発局が発注した建設工事と建設コンサルタント業務等の入札結果です。1 行が 1 つの案件に入札した 1 業者で、予定価格・調査基準価格・技術点と、1〜3 回目の入札額・評価値、落札したかどうかを持ちます。同じ案件の行は bid_id が同じです。
+
+  - 収録している局は北海道開発局と東北・関東・近畿・四国・九州の地方整備局です
+  - 各局の掲載は今年度と前年度の分が中心です。このデータセットは毎月取得して原本を保存し続けるので、取得を始めた後の分は掲載が終わっても残ります
+  - 金額は税抜きの円です。辞退・無効・予定価格超過などは、金額ではなく round1_status などの列に入ります
+  - 法人番号（corporate_number）は四国地方整備局の行だけにあります。ほかの局の行は業者名が「（株）」などの略記のままです
+  - 元の Excel は source_file の原本から取得できます。source_sha256 が原本の sha256 です
+keywords:
+  - 入札
+  - 入札結果
+  - 落札
+  - 落札率
+  - 予定価格
+  - 調査基準価格
+  - 総合評価
+  - 公共工事
+  - 直轄工事
+  - 建設コンサルタント
+  - 地方整備局
+  - 北海道開発局
+  - 建設業者
+  - 法人番号
+sources:
+  - path: https://www.mlit.go.jp/tec/nyuusatu/datalink.html
+fields:
+  - name: bid_id
+    title: 案件 ID
+    description: 局・工事か業務か・部局・案件名・入札日から作った識別子。同じ案件の入札者の行で同じ値になる
+    annotations: { queria: { semantic: { role: dimension } } }
+  - name: bureau
+    title: 局
+    description: 北海道開発局・東北地方整備局など
+    annotations: { queria: { semantic: { role: dimension } } }
+  - name: kind
+    title: 工事・業務
+    description: 「工事」（建設工事）か「業務」（建設コンサルタント業務等）
+    annotations: { queria: { semantic: { role: dimension } } }
+  - name: office
+    title: 部局名
+    description: 発注した事務所など（「関東地方整備局　横浜国道事務所」など）
+    annotations: { queria: { semantic: { role: dimension } } }
+  - name: project_name
+    title: 工事名・業務名
+  - name: location
+    title: 施工場所
+    description: 東北地方整備局の工事だけ
+  - name: bid_date
+    title: 入札日
+  - name: contract_date
+    title: 契約日
+  - name: period
+    title: 工期
+    description: 東北地方整備局の工事だけ。元の表記のまま
+  - name: category
+    title: 工種・業種区分
+    description: 一般土木工事・維持修繕工事・土木関係建設コンサルタント業務・測量など
+    annotations: { queria: { semantic: { role: dimension } } }
+  - name: method
+    title: 入札方式
+    description: 一般競争入札・指名競争入札・随意契約など
+    annotations: { queria: { semantic: { role: dimension } } }
+  - name: overall_evaluation
+    title: 総合評価
+    description: 総合評価落札方式なら true
+  - name: bidder_name
+    title: 入札業者名
+    description: 元の表記のまま（「（株）」などの略記を含む）
+  - name: bidder_address
+    title: 本店住所
+    description: 近畿地方整備局と、東北地方整備局の一部のファイルだけ
+  - name: corporate_number
+    title: 法人番号
+    description: 13 桁。四国地方整備局の行だけ
+    annotations: { queria: { semantic: { role: entity, name: corporate_number } } }
+  - name: planned_price
+    title: 予定価格（税抜き、円）
+    annotations: { queria: { semantic: { role: measure } } }
+  - name: minimum_price
+    title: 調査基準価格（税抜き、円）
+    annotations: { queria: { semantic: { role: measure } } }
+  - name: technical_score
+    title: 技術点
+    description: 工事は基礎点＋加算点、業務は技術点（技術評価点）
+  - name: round1_amount
+    title: 1 回目の入札額（税抜き、円）
+    annotations: { queria: { semantic: { role: measure } } }
+  - name: round1_price_score
+    title: 1 回目の価格点
+    description: 業務だけ
+  - name: round1_score
+    title: 1 回目の評価値
+  - name: round1_status
+    title: 1 回目の状態
+    description: 辞退・無効・予定価格超過など、金額の代わりに書かれた文字
+  - name: round2_amount
+    title: 2 回目の入札額（税抜き、円）
+    annotations: { queria: { semantic: { role: measure } } }
+  - name: round2_price_score
+    title: 2 回目の価格点
+  - name: round2_score
+    title: 2 回目の評価値
+  - name: round2_status
+    title: 2 回目の状態
+  - name: round3_amount
+    title: 3 回目の入札額（税抜き、円）
+    annotations: { queria: { semantic: { role: measure } } }
+  - name: round3_price_score
+    title: 3 回目の価格点
+  - name: round3_score
+    title: 3 回目の評価値
+  - name: round3_status
+    title: 3 回目の状態
+  - name: estimate_amount
+    title: 見積金額（税抜き、円）
+    description: 随意契約（プロポーザル方式を含む）では契約金額
+    annotations: { queria: { semantic: { role: measure } } }
+  - name: is_winner
+    title: 落札
+    description: 備考に「落札」か「決定」（プロポーザル方式・随意契約の契約の相手方）とある行は true
+  - name: note
+    title: 備考
+  - name: source_url
+    title: 元のファイルの URL
+  - name: source_sha256
+    title: 元のファイルの sha256
+    description: source_file の sha256 と同じ値

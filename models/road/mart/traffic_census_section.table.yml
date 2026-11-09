@@ -7,7 +7,6 @@ description: |-
   - 全国の約 3 割の区間は観測していない推定値です（`up_observation_type`・`down_observation_type`）
   - 交通量の調査単位は基本区間より粗く、同じ交通量が隣の区間にも付きます。区間数を交通量の大きさの比較に使えません
   - 一般市町村道は調査の対象外です
-published: true
 sources:
   - path: https://www.mlit.go.jp/road/census/r3/
 fields:
@@ -23,7 +22,7 @@ fields:
   - name: prefecture_code
     title: 都道府県コード
     description: 2桁。配布ファイルの単位
-    semantic: { role: entity, name: prefecture }
+    annotations: { queria: { semantic: { role: entity, name: prefecture } } }
   - name: road_type_code
     title: 道路種別コード
   - name: road_type

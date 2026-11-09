@@ -9,14 +9,25 @@
 7. deflator:    建設工事費デフレーター（月次・年度次）の取得と Parquet 化
 8. labor:       公共工事設計労務単価の取得と Parquet 化
 9. negative_info: ネガティブ情報等検索サイトの行政処分等の取得と Parquet 化
-10. license:   建設業者・宅建業者等企業情報検索システムの許可業者の一覧の取得と Parquet 化
-11. dbt:        dbt ビルド
+10. bids:       地方整備局の入札結果データの取得（原本は data/assets）と Parquet 化
+11. license:    建設業者・宅建業者等企業情報検索システムの許可業者の一覧の取得と Parquet 化
+12. dbt:        dbt ビルド
+
+月次の定期実行（GitHub Actions の schedule）では、毎月更新される行政処分・入札結果・建設業者と宅建業者だけを
+取り直し、dbt もその 3 つのスキーマだけを作り直す。ほかのテーブルは fdl checkout した
+前のバージョンのまま残る。
+
+    python main.py            # すべて
+    python main.py monthly    # 行政処分・入札結果・建設業者と宅建業者だけ
 """
 
 import logging
+import os
+import sys
 
 from dbt.cli.main import dbtRunner
 
+from pipelines.bids import build_bids_parquet, download_bids
 from pipelines.construction_deflator import (
     build_construction_deflator_parquet,
     download_construction_deflator,
@@ -42,14 +53,18 @@ from pipelines.transaction_volume import (
 logger = logging.getLogger("pipelines")
 
 
-def dbt_build():
+# 月次で作り直すスキーマ
+MONTHLY_SELECT = ["path:models/disposition", "path:models/bid", "path:models/license"]
+
+
+def dbt_build(select: list[str] | None = None):
     dbt = dbtRunner()
 
     result = dbt.invoke(["deps"])
     if not result.success:
         raise SystemExit("dbt deps failed")
 
-    result = dbt.invoke(["build"])
+    result = dbt.invoke(["build", *(["--select", *select] if select else [])])
     if not result.success:
         raise SystemExit("dbt build failed")
 
@@ -63,6 +78,16 @@ def main():
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         force=True,
     )
+
+    monthly = sys.argv[1:] == ["monthly"] or os.environ.get("GITHUB_EVENT_NAME") == "schedule"
+    if monthly:
+        download_negative_info()
+        build_negative_info_parquet()
+        download_bids()
+        build_bids_parquet()
+        download_license()
+        dbt_build(MONTHLY_SELECT)
+        return
 
     download_kasho()
     download_jikantai()
@@ -78,6 +103,8 @@ def main():
     build_labor_unit_price_parquet()
     download_negative_info()
     build_negative_info_parquet()
+    download_bids()
+    build_bids_parquet()
     download_license()
     dbt_build()
 

@@ -17,7 +17,6 @@ keywords:
   - 知事許可
   - 許可業者名簿
   - 工事業者
-published: true
 sources:
   - path: https://etsuran2.mlit.go.jp/TAKKEN/
 fields:
@@ -27,11 +26,11 @@ fields:
   - name: license_kind
     title: 許可の種類
     description: 大臣（2 つ以上の都道府県に営業所がある）か知事
-    semantic: { role: dimension }
+    annotations: { queria: { semantic: { role: dimension } } }
   - name: authority
     title: 許可行政庁
     description: 都道府県名。大臣許可は申請を受けた地方整備局等
-    semantic: { role: dimension }
+    annotations: { queria: { semantic: { role: dimension } } }
   - name: license_number
     title: 許可番号
     description: 「第000005号」の数字。許可行政庁ごとの番号で、許可行政庁と組で 1 許可を表す

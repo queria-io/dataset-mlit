@@ -20,6 +20,10 @@ on:
       - ".python-version"
       - "shared"
       - ".github/workflows/sync.yml"
+  # 行政処分・入札結果・建設業者と宅建業者は毎月更新される。定期実行ではこの 3 つだけを取り直す（main.py）。
+  # 入札結果は今年度と前年度の分しか掲載されないので、毎月取って原本を持ち続ける
+  schedule:
+    - cron: "0 18 10 * *"
   workflow_dispatch:
 
 concurrency:

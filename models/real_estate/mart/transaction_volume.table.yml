@@ -19,7 +19,6 @@ keywords:
   - 工場
   - 法人
   - 不動産
-published: true
 sources:
   - path: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
 fields:
@@ -31,7 +30,7 @@ fields:
   - name: prefecture_code
     title: 都道府県コード
     description: 2桁。東京都・愛知県・大阪府の行だけに入り、それ以外の地域は NULL
-    semantic: { role: entity, name: prefecture }
+    annotations: { queria: { semantic: { role: entity, name: prefecture } } }
   - name: category
     title: 用途
     description: 戸建住宅・マンション(区分所有)・店舗・オフィスなど 7 区分

@@ -27,22 +27,21 @@ keywords:
   - 自動車整備事業者
   - 法人番号
   - コンプライアンス
-published: true
 sources:
   - path: https://www.mlit.go.jp/nega-inf/
 fields:
   - name: field_code
     title: 分野コード
     description: 検索サイトの分野の識別子（kensetugyousya・takuti など）
-    semantic: { role: dimension }
+    annotations: { queria: { semantic: { role: dimension } } }
   - name: sector
     title: 事業分野
     description: 建設工事（公共事業を含む）・不動産の売買・管理・旅客運送など
-    semantic: { role: dimension }
+    annotations: { queria: { semantic: { role: dimension } } }
   - name: field
     title: 事業者の種類
     description: 建設業者・宅地建物取引業者・指名停止など。指名停止は国土交通省の発注機関による措置
-    semantic: { role: dimension }
+    annotations: { queria: { semantic: { role: dimension } } }
   - name: record_no
     title: 分野内の番号
     description: 検索サイトの分野ごとの通し番号。field_code と組で 1 件を表す
@@ -51,13 +50,13 @@ fields:
   - name: authority
     title: 処分等を行った者
     description: 地方整備局・運輸局・都道府県など。鉄道事業者など検索サイトに載っていない分野は NULL
-    semantic: { role: dimension }
+    annotations: { queria: { semantic: { role: dimension } } }
   - name: name
     title: 事業者名
   - name: corporate_number
     title: 法人番号
     description: 13桁。検索サイトに載っていない行は NULL
-    semantic: { role: entity, name: corporate_number }
+    annotations: { queria: { semantic: { role: entity, name: corporate_number } } }
   - name: license_number
     title: 許可・登録番号
     description: 建設業の許可番号や宅地建物取引業者の免許番号など。載っている分野だけ
@@ -72,7 +71,7 @@ fields:
   - name: action_type
     title: 処分等の種類
     description: 許可取消・営業停止・指示・業務停止・指名停止・行政指導など
-    semantic: { role: dimension }
+    annotations: { queria: { semantic: { role: dimension } } }
   - name: action_period
     title: 処分等の期間
     description: 停止処分の期間。検索サイトの表記のまま

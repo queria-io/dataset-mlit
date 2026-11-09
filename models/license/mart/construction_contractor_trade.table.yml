@@ -17,7 +17,6 @@ keywords:
   - 電気工事業
   - 管工事業
   - 解体工事業
-published: true
 sources:
   - path: https://etsuran2.mlit.go.jp/TAKKEN/
 fields:
@@ -27,12 +26,12 @@ fields:
   - name: trade_code
     title: 業種コード
     description: 1〜29。1 が土木工事業、29 が解体工事業
-    semantic: { role: dimension }
+    annotations: { queria: { semantic: { role: dimension } } }
   - name: trade
     title: 業種
     description: 土木工事業・建築工事業など
-    semantic: { role: dimension }
+    annotations: { queria: { semantic: { role: dimension } } }
   - name: trade_type
     title: 一般・特定
     description: 一般（一般建設業）か特定（特定建設業）。特定は元請として大きな額を下請に出せる許可
-    semantic: { role: dimension }
+    annotations: { queria: { semantic: { role: dimension } } }
