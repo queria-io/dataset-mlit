@@ -10,14 +10,15 @@
 8. labor:       公共工事設計労務単価の取得と Parquet 化
 9. negative_info: ネガティブ情報等検索サイトの行政処分等の取得と Parquet 化
 10. bids:       地方整備局の入札結果データの取得（原本は data/assets）と Parquet 化
-11. dbt:        dbt ビルド
+11. license:    建設業者・宅建業者等企業情報検索システムの許可業者の一覧の取得と Parquet 化
+12. dbt:        dbt ビルド
 
-月次の定期実行（GitHub Actions の schedule）では、毎月更新される行政処分と入札結果だけを
-取り直し、dbt もその 2 つのスキーマだけを作り直す。ほかのテーブルは fdl checkout した
+月次の定期実行（GitHub Actions の schedule）では、毎月更新される行政処分・入札結果・建設業者と宅建業者だけを
+取り直し、dbt もその 3 つのスキーマだけを作り直す。ほかのテーブルは fdl checkout した
 前のバージョンのまま残る。
 
     python main.py            # すべて
-    python main.py monthly    # 行政処分と入札結果だけ
+    python main.py monthly    # 行政処分・入札結果・建設業者と宅建業者だけ
 """
 
 import logging
@@ -35,6 +36,7 @@ from pipelines.labor_unit_price import (
     build_labor_unit_price_parquet,
     download_labor_unit_price,
 )
+from pipelines.license import download_license
 from pipelines.negative_info import build_negative_info_parquet, download_negative_info
 from pipelines.price_index import build_price_index_parquet, download_price_index
 from pipelines.traffic_census import (
@@ -52,7 +54,7 @@ logger = logging.getLogger("pipelines")
 
 
 # 月次で作り直すスキーマ
-MONTHLY_SELECT = ["path:models/disposition", "path:models/bid"]
+MONTHLY_SELECT = ["path:models/disposition", "path:models/bid", "path:models/license"]
 
 
 def dbt_build(select: list[str] | None = None):
@@ -83,6 +85,7 @@ def main():
         build_negative_info_parquet()
         download_bids()
         build_bids_parquet()
+        download_license()
         dbt_build(MONTHLY_SELECT)
         return
 
@@ -102,6 +105,7 @@ def main():
     build_negative_info_parquet()
     download_bids()
     build_bids_parquet()
+    download_license()
     dbt_build()
 
 

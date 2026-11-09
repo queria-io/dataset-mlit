@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: construction_contractor
+    description: |
+      建設業の許可を受けている法人。1行 = 1許可。
+      出典: 「建設業者・宅建業者等企業情報検索システム」（国土交通省）を加工して作成。
+    access: public
+  - name: construction_contractor_trade
+    description: |
+      建設業者が許可を受けている業種と一般・特定の区分。1行 = 1許可 × 1業種。
+      出典: 「建設業者・宅建業者等企業情報検索システム」（国土交通省）を加工して作成。
+    access: public
+  - name: real_estate_broker
+    description: |
+      宅地建物取引業の免許を受けている法人。1行 = 1免許。
+      出典: 「建設業者・宅建業者等企業情報検索システム」（国土交通省）を加工して作成。
+    access: public

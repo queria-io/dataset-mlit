@@ -1,0 +1,4 @@
+schema: license
+name: raw_construction_contractor_trade
+description: 建設業者・宅建業者等企業情報検索システムの一覧を 1 行にした中間テーブル。
+annotations: { queria: { published: false } }

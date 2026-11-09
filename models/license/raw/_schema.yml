@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: raw_construction_contractor
+    description: >
+      建設業者・宅建業者等企業情報検索システムの建設業者の一覧を、パイプラインが 1 許可 1 行にした Parquet。
+      個人事業主の行も含む。代表者名は持たない。
+  - name: raw_construction_contractor_trade
+    description: >
+      建設業者の一覧を業種と一般・特定で絞って検索した結果。1 行 = 1 許可 × 1 業種。個人事業主の行も含む。
+  - name: raw_real_estate_broker
+    description: >
+      建設業者・宅建業者等企業情報検索システムの宅地建物取引業者の一覧（本店の行）を、パイプラインが 1 免許 1 行にした Parquet。
+      個人事業主の行も含む。代表者名は持たない。
