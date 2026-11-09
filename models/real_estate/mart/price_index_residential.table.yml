@@ -14,7 +14,6 @@ keywords:
   - 住宅地
   - 地価
   - 不動産
-published: true
 sources:
   - path: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
 fields:
@@ -26,7 +25,7 @@ fields:
   - name: prefecture_code
     title: 都道府県コード
     description: 2桁。東京都・愛知県・大阪府の行だけに入り、それ以外の地域は NULL
-    semantic: { role: entity, name: prefecture }
+    annotations: { queria: { semantic: { role: entity, name: prefecture } } }
   - name: adjustment
     title: 季節調整の別
     description: 季節調整 / 原系列

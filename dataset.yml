@@ -1,10 +1,12 @@
-spec_version: "0.1"
+# この dataset.yml は fdl commit が読む（FDL の dataset.json を YAML で書いたもの）。
+# 表の説明は models/ の *.table.yml に書く。表と列の型・NULL・行数は fdl commit がカタログから埋める。
+# Queria だけの項目（テーマ・カバー・列の意味）は annotations.queria に書く。
 name: mlit
-title: 国土交通省 道路交通センサス・不動産価格指数・建設工事費デフレーター・公共工事設計労務単価・行政処分
+title: 国土交通省 道路交通センサス・不動産価格指数・建設工事費デフレーター・公共工事設計労務単価・行政処分・入札結果
 description: |-
-  国土交通省の道路交通センサス（令和3年度）の区間別・時間帯別の交通量と、不動産価格指数、不動産取引件数・面積、建設工事費デフレーター、公共工事設計労務単価、建設業者・宅地建物取引業者などへの行政処分です。交通量は道路の区間の形を持ち、そのまま地図に重ねられます。行政処分は法人番号を持ちます。
+  国土交通省の道路交通センサス（令和3年度）の区間別・時間帯別の交通量と、不動産価格指数、不動産取引件数・面積、建設工事費デフレーター、公共工事設計労務単価、建設業者・宅地建物取引業者などへの行政処分、地方整備局・北海道開発局の直轄工事と業務の入札結果です。交通量は道路の区間の形を持ち、そのまま地図に重ねられます。行政処分は法人番号を持ちます。入札結果は案件ごとに全入札者の入札額を持ち、元の Excel も保存しています。
 
-  出典：「令和3年度全国道路・街路交通情勢調査 一般交通量調査」「不動産価格指数」「不動産取引件数・面積」「建設工事費デフレーター」「公共工事設計労務単価」「ネガティブ情報等検索サイト」（国土交通省）。Queria が加工したものです。
+  出典：「令和3年度全国道路・街路交通情勢調査 一般交通量調査」「不動産価格指数」「不動産取引件数・面積」「建設工事費デフレーター」「公共工事設計労務単価」「ネガティブ情報等検索サイト」（国土交通省）、各地方整備局・北海道開発局「入札結果データ」。Queria が加工したものです。
 keywords:
   - 道路交通センサス
   - 全国道路・街路交通情勢調査
@@ -36,10 +38,13 @@ keywords:
   - 指名停止
   - 建設業者
   - 宅地建物取引業者
+  - 入札結果
+  - 落札
+  - 予定価格
+  - 公共工事
   - 法人番号
 homepage: https://github.com/queria-io/dataset-mlit
 language: ja
-themes: [transport_tourism, housing_land, economy]
 
 licenses:
   - JP-PDL-1.0
@@ -57,6 +62,8 @@ sources:
     path: https://www.mlit.go.jp/totikensangyo/const/1_6_bt_000217.html
   - title: ネガティブ情報等検索サイト（国土交通省）
     path: https://www.mlit.go.jp/nega-inf/
+  - title: 入札結果データ（各地方整備局・北海道開発局）
+    path: https://www.mlit.go.jp/tec/nyuusatu/datalink.html
 
 contributors:
   - title: 国土交通省
@@ -66,7 +73,6 @@ contributors:
 temporal_coverage: { start: "1951", end: null }
 spatial_coverage: [JP]
 update_frequency: irregular
-cover: 🚗
 
 schemas:
   - name: road
@@ -77,3 +83,10 @@ schemas:
     title: 建設工事費・労務単価
   - name: disposition
     title: 行政処分
+  - name: bid
+    title: 入札結果
+
+annotations:
+  queria:
+    themes: [transport_tourism, housing_land, economy]
+    cover: 🚗

@@ -1,0 +1,37 @@
+schema: bid
+name: source_file
+title: 入札結果データの原本ファイル
+description: |-
+  地方整備局・北海道開発局が公表している「入札結果データ」の Excel の一覧です。1 行が 1 つの原本で、取得した URL・掲載ページ・取得日時と、ファイルの sha256 を持ちます。
+
+  - 原本はこのデータセットのアセットとして保存しています。sha256 の列からファイルを取得できます
+  - 各局の掲載は今年度と前年度の分が中心です。掲載ページから消えたファイルもこの一覧に残します
+  - 同じ URL のファイルが差し替えられたときは、sha256 ごとに行が分かれます。bid_result は URL ごとに一番新しい原本から作ります
+keywords:
+  - 入札結果
+  - 原本
+  - Excel
+sources:
+  - path: https://www.mlit.go.jp/tec/nyuusatu/datalink.html
+fields:
+  - name: bureau
+    title: 局
+    description: 北海道開発局・東北地方整備局など
+    annotations: { queria: { semantic: { role: dimension } } }
+  - name: url
+    title: ファイルの URL
+  - name: page_url
+    title: 掲載ページの URL
+  - name: link_text
+    title: リンクの文字
+    description: 掲載ページでファイルに付いていたリンクの文字（「9月契約分建設工事」など）
+  - name: sha256
+    title: 原本
+    description: ファイルの sha256。原本はアセットとして保存している
+    asset: true
+  - name: bytes
+    title: バイト数
+  - name: first_seen_at
+    title: 初めて取得した日時
+  - name: last_seen_at
+    title: 最後に掲載を確認した日時
