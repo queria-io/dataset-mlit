@@ -1,0 +1,7 @@
+version: 2
+
+models:
+  - name: raw_source_file
+    description: 入札結果データの Excel の一覧（中間テーブル）
+  - name: raw_bid_result
+    description: 入札結果データの Excel を読んだ行（中間テーブル）

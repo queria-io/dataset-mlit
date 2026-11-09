@@ -27,3 +27,5 @@ data/*.log
 data/xlsx/
 data/pdf/
 data/html/
+data/assets/
+.fdl/
