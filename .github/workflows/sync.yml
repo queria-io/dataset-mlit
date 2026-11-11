@@ -36,7 +36,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: queria-io/dataset-shared/.github/workflows/sync.yml@main
+    uses: queria-io/dataset-shared/.github/workflows/sync.yml@fe59be721647d5b1bbffe1ef3eb2d318c81be3f3
     with:
       dataset_name: mlit
       # 区間形状のタイル（実在する 18,004 枚）を毎回取りに行く。米国のランナーからは
@@ -45,4 +45,6 @@ jobs:
       # 建設業者・宅建業者の検索も、業種ごとの検索に 1 回数秒かかり、さらに1時間ほどかかる。
       # 既定の 90 分では余裕が無い
       timeout_minutes: 300
-    secrets: inherit
+    secrets:
+      QUERIA_TOKEN: ${{ secrets.QUERIA_TOKEN }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
