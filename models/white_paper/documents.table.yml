@@ -1,0 +1,27 @@
+schema: white_paper
+name: documents
+title: 国土交通白書の PDF
+description: |-
+  国土交通白書の年版ごとの PDF（一括表示の版）の一覧です。1 行が 1 つの PDF で、令和3年版から収録しています。
+
+  - sha256 はファイルの中身の sha256 です。white_paper.pages と white_paper.page_bigrams はこの値で PDF を指します
+  - PDF の実体はこのデータセットに置いていません。url から国土交通省のサイトで開けます
+primary_key: [sha256]
+sources:
+  - path: https://www.mlit.go.jp/statistics/file000004.html
+fields:
+  - name: sha256
+    title: PDF の sha256
+  - name: edition
+    title: 年版
+    description: 白書の年版を西暦で表した値。2026 は令和8年版
+  - name: title
+    title: 題名
+  - name: url
+    title: PDF の URL
+  - name: bytes
+    title: バイト数
+  - name: page_count
+    title: ページ数
+  - name: fetched_at
+    title: 取得日時

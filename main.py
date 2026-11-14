@@ -10,7 +10,8 @@
 8. labor:       公共工事設計労務単価の取得と Parquet 化
 9. negative_info: ネガティブ情報等検索サイトの行政処分等の取得と Parquet 化
 10. bids:       地方整備局の入札結果データの取得（原本は data/assets）と Parquet 化
-11. dbt:        dbt ビルド
+11. white_paper: 国土交通白書（令和3年版から）の PDF の取得とページごとの本文の Parquet 化
+12. dbt:        dbt ビルド
 
 月次の定期実行（GitHub Actions の schedule）では、毎月更新される行政処分・入札結果だけを
 取り直し、dbt もその 2 つのスキーマだけを作り直す。ほかのテーブルは fdl checkout した
@@ -47,6 +48,7 @@ from pipelines.transaction_volume import (
     build_transaction_volume_parquet,
     download_transaction_volume,
 )
+from pipelines.white_paper import build_white_paper_parquet, download_white_paper
 
 logger = logging.getLogger("pipelines")
 
@@ -102,6 +104,8 @@ def main():
     build_negative_info_parquet()
     download_bids()
     build_bids_parquet()
+    download_white_paper()
+    build_white_paper_parquet()
     dbt_build()
 
 

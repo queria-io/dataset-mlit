@@ -1,0 +1,22 @@
+schema: white_paper
+name: page_bigrams
+title: 国土交通白書のページの 2-gram
+description: |-
+  white_paper.pages の本文から空白と改行を除き、2 文字ずつ区切った文字列（2-gram）とページごとの出現回数です。全文検索の索引に使います。
+
+  - 検索語を同じように 2 文字ずつ区切り、すべての 2-gram を含むページを探すと、その語を含む可能性のあるページが分かります。最後は white_paper.pages の text で語そのものを含むかを確認してください
+  - tf とページごとの tf の合計（ページの長さ）から BM25 などで順位を付けられます
+  - gram の順に並んでいるので、gram で絞り込むと読む範囲が小さくなります
+primary_key: [sha256, page, gram]
+sources:
+  - path: https://www.mlit.go.jp/statistics/file000004.html
+fields:
+  - name: sha256
+    title: PDF の sha256
+  - name: page
+    title: ページ
+  - name: gram
+    title: 2-gram
+  - name: tf
+    title: 出現回数
+    description: そのページの本文に gram が現れる回数
