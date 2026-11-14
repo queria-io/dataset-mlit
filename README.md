@@ -1,6 +1,6 @@
 # 国土交通省 道路交通センサス・不動産価格指数・建設工事費
 
-国土交通省の統計のうち、道路交通センサスの交通量、不動産価格指数と不動産取引件数・面積、建設工事費デフレーター、公共工事設計労務単価、建設業者・宅地建物取引業者などへの行政処分、地方整備局・北海道開発局の直轄工事・業務の入札結果を、SQL で集計・地図表示できるテーブルにしたデータセットです。交通量は道路の区間の形を持つので、出店や施設配置の検討で沿道の交通量を地図に重ねられます。
+国土交通省の統計のうち、道路交通センサスの交通量、不動産価格指数と不動産取引件数・面積、建設工事費デフレーター、公共工事設計労務単価、建設業者・宅地建物取引業者などへの行政処分、地方整備局・北海道開発局の直轄工事・業務の入札結果、国土交通白書の本文を、SQL で集計・地図表示できるテーブルにしたデータセットです。交通量は道路の区間の形を持つので、出店や施設配置の検討で沿道の交通量を地図に重ねられます。
 
 ## 出典と利用条件
 
@@ -12,6 +12,7 @@
 | [公共工事設計労務単価](https://www.mlit.go.jp/totikensangyo/const/1_6_bt_000217.html)の改定ごとの記者発表の PDF の単価表 | `construction.design_labor_unit_price` |
 | [ネガティブ情報等検索サイト](https://www.mlit.go.jp/nega-inf/)の事業者の分野の検索結果と概要のページ | `disposition.administrative_action` |
 | 北海道開発局と東北・関東・近畿・四国・九州の地方整備局の[入札結果データ](https://www.mlit.go.jp/tec/nyuusatu/datalink.html)の Excel（建設工事・建設コンサルタント業務等） | `bid.*` |
+| [国土交通白書](https://www.mlit.go.jp/statistics/file000004.html)の令和3年版から令和8年版までの一括 PDF | `white_paper.*` |
 
 - 国土交通省ウェブサイトのコンテンツに準拠する[公共データ利用規約（第1.0版）（PDL1.0）](https://www.mlit.go.jp/link.html)に従います。上の資料はどれも同規約の[適用除外となるコンテンツの一覧](https://www.mlit.go.jp/page/kanbo01_hy_003657.html)に含まれていません
 - 使うときは、たとえば「「令和3年度全国道路・街路交通情勢調査 一般交通量調査」（国土交通省）を加工して作成」のように、使った資料ごとに出典と加工したことを書いてください
@@ -25,6 +26,7 @@
 - 公共工事設計労務単価: PDF の単価表を縦持ちに組み替え、職種に公表資料の番号を付け、単価を囲む括弧をフラグの列に移しています
 - 行政処分: 分野ごとの検索結果の一覧と 1 件ごとの概要のページを 1 行にまとめ、事業者名の括弧書きの法人番号と許可・登録番号を列に分けています。全角英数を半角にそろえ、住所の先頭で都道府県名が 2 回続く表記を 1 回にしています。建設業者の代表者名と、個人事業主の行は取り込んでいません
 - 入札結果: 局ごとに列の並びと見出しが少しずつ違う Excel を、1 行 = 案件 × 入札業者の 1 つのテーブルにまとめています。和暦や Excel のシリアル値の日付を日付型にし、入札額の欄の「辞退」「無効」などの文字を状態の列に分けています。業者名は元の表記のままです
+- 国土交通白書: PDF からページごとに文字を取り出し、NFKC で正規化しています。文字コードの対応表が無いフォントの文字は、Adobe-Japan1 の CID とみなして文字に戻しています。図や写真は取り込んでいません
 - 交通量・指数などの値そのものは変更していません
 
 ## テーブル
@@ -42,6 +44,9 @@
 | `disposition.administrative_action` | 1 行が 1 件の行政処分・行政指導・指名停止。法人番号・処分の種類・根拠法令・違反行為の概要 |
 | `bid.bid_result` | 1 行が 1 つの案件に入札した 1 業者。予定価格・調査基準価格・技術点・1〜3 回目の入札額と評価値・落札したかどうか |
 | `bid.source_file` | 入札結果データの Excel の原本の一覧。sha256 の列から原本を取得できる |
+| `white_paper.documents` | 1 行が 1 年版の国土交通白書の PDF。sha256・URL・ページ数 |
+| `white_paper.pages` | 1 行が 1 ページ。本文・ページ番号の表記・PDF のそのページへの URL |
+| `white_paper.page_bigrams` | 1 行が 1 ページ × 2 文字の組。出現回数を持ち、全文検索の索引に使う |
 
 ## 使い方
 
@@ -119,6 +124,38 @@ LIMIT 20;
 - 法人番号は四国地方整備局の行だけにあります。ほかの局は業者名が「（株）」などの略記で、近畿（と東北の一部）は本店住所も持ちます
 - 金額は税抜きの円です。随意契約（プロポーザル方式を含む）では見積金額が契約金額で、落札者の備考は「決定」です
 
+## 国土交通白書の注意
+
+- 本文は PDF から取り出した文字です。段組みや図の中の文字は、読む順が前後することがあります
+- 図の軸の数字など、ごく一部の文字は正しく戻せていません。`cid_repaired_chars` は、そのページで CID から戻した文字の数です
+- `page` は PDF の先頭から数えたページ、`page_label` は紙面に印刷されたページ番号です
+- 図表には国土交通省以外の著作物が含まれることがあります。このデータセットは本文の文字だけを持ち、PDF の原本は保存していません
+
+「下水道管路」を含むページを、BM25 の順に並べる:
+
+```sql
+WITH q AS (
+    SELECT DISTINCT substr(w, i, 2) AS gram
+    FROM (SELECT '下水道管路' AS w), range(1, length(w)) AS r(i)
+),
+hits AS (SELECT b.* FROM mlit.white_paper.page_bigrams AS b JOIN q USING (gram)),
+len AS (SELECT sha256, page, sum(tf) AS dl FROM mlit.white_paper.page_bigrams GROUP BY ALL),
+stats AS (SELECT count(*) AS n, avg(dl) AS avgdl FROM len),
+df AS (SELECT gram, count(*) AS df FROM hits GROUP BY gram)
+SELECT p.edition, p.page, p.page_url,
+    sum(ln(1 + (s.n - df.df + 0.5) / (df.df + 0.5)) * h.tf * 2.2
+        / (h.tf + 1.2 * (0.25 + 0.75 * l.dl / s.avgdl))) AS score
+FROM hits AS h
+JOIN df USING (gram)
+JOIN len AS l USING (sha256, page)
+JOIN mlit.white_paper.pages AS p USING (sha256, page)
+CROSS JOIN stats AS s
+GROUP BY ALL
+HAVING count(*) = (SELECT count(*) FROM q)
+ORDER BY score DESC
+LIMIT 5;
+```
+
 ## ビルド
 
 ```bash
@@ -135,6 +172,7 @@ bash scripts/build.sh
 - 公共工事設計労務単価: 案内ページから改定ごとの記者発表をたどって PDF を取得します。公表済みの PDF は差し替わらないので、取得済みのものは取り直しません
 - 行政処分: 分野ごとに検索結果の一覧の全ページと、1 件ごとの概要のページを、1 秒に 1 回の頻度で取得します（全分野で約 4,000 ページ、約 1 時間）。概要のページは取得済みなら取り直しません
 - 入札結果: 局の掲載ページ（年度別のページを含む）から Excel のリンクを集めて取得し、原本を `data/assets/<sha256>.<拡張子>` に置きます。`scripts/build.sh` が `FDL_ASSETS` にこのフォルダを渡し、`fdl commit` がリポジトリに無い原本だけを上げます。原本の一覧は前のバージョンの `bid.source_file` を引き継ぎ、手元に無い原本はリポジトリのアセットから取得します
+- 国土交通白書: 年版ごとの一括 PDF を取得し、PyMuPDF でページごとに文字を取り出します。CID から文字に戻す対応表は、Adobe の [mapping-resources-pdf](https://github.com/adobe-type-tools/mapping-resources-pdf) の Adobe-Japan1-UCS2 をコミットを固定して取得します
 
 GitHub Actions の定期実行（毎月 11 日）では、行政処分・入札結果だけを取り直します（`python main.py monthly` と同じ）。ほかのテーブルは前のバージョンのまま残ります。
 

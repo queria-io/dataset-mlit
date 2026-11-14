@@ -44,3 +44,5 @@ models:
         +materialized: table
       mart:
         +materialized: table
+    white_paper:
+      +materialized: table
