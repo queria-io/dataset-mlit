@@ -7,12 +7,6 @@ model-paths: ["models"]
 macro-paths: ["shared/macros"]
 clean-targets: ["target", "dbt_packages"]
 
-# 建設業者・宅建業者の一覧（license）は etsuran データセットへ移した。ビルドは前のバージョンの
-# カタログから始まり、モデルを消してもテーブルは残るので、ここで外す。外したバージョンが
-# 公開されたら、この行も消す
-on-run-start:
-  - "DROP SCHEMA IF EXISTS mlit.license CASCADE"
-
 models:
   mlit:
     +database: mlit
