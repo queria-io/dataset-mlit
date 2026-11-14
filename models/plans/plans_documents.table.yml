@@ -1,0 +1,28 @@
+schema: plans
+name: documents
+title: 行政事業レビューが挙げる計画・通知等の PDF
+description: |-
+  行政事業レビューのシートが「関係する計画・通知等」に挙げる URL のうち、国土交通省のサイト（www.mlit.go.jp）の PDF の一覧です。1 行が 1 つの URL で、2024 年度のシートから収録しています。
+
+  - sha256 はファイルの中身の sha256 です。plans.pages と plans.page_bigrams はこの値で PDF を指します。同じ中身の PDF が別の URL で載っていると、sha256 が同じ行が複数あります
+  - 取得できなかった URL（リンク切れ、PDF ではない応答）は入っていません
+  - fetched_at が PDF を取得した日時です
+  - PDF の実体はこのデータセットに置いていません。url から国土交通省のサイトで開けます
+primary_key: [url]
+sources:
+  - path: https://rssystem.go.jp
+fields:
+  - name: url
+    title: PDF の URL
+    description: 行政事業レビューのシートの計画通知等URL
+  - name: sha256
+    title: PDF の sha256
+  - name: title
+    title: 計画・通知等の名前
+    description: 行政事業レビューのシートの計画通知名。同じ URL が複数のシートにあるときは新しい年度の名前
+  - name: bytes
+    title: バイト数
+  - name: page_count
+    title: ページ数
+  - name: fetched_at
+    title: 取得日時
