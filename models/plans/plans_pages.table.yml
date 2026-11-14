@@ -1,0 +1,27 @@
+schema: plans
+name: pages
+title: 計画・通知等の PDF のページ
+description: |-
+  plans.documents の PDF の本文をページごとに取り出したテーブルです。1 行が 1 つの PDF の 1 ページです。
+
+  - text は PDF の文字を取り出して NFKC で正規化した値です。段組みの順序や図の中の文字の位置は PDF の描画順のままで、読む順になっていないことがあります
+  - 文字コードの対応表が無いフォントの文字は、Adobe-Japan1 の文字の番号（CID）から文字に戻しています。戻した文字の数が cid_repaired_chars です
+  - スキャンした画像だけの PDF は text が空です
+  - page は PDF の 1 始まりのページ番号です。印刷されたページ番号は page_label にあります（PDF に付いているときだけ）
+primary_key: [sha256, page]
+sources:
+  - path: https://rssystem.go.jp
+fields:
+  - name: sha256
+    title: PDF の sha256
+    description: plans.documents の sha256
+  - name: page
+    title: ページ
+    description: PDF の 1 始まりのページ番号
+  - name: page_label
+    title: ページラベル
+    description: PDF に付いている印刷上のページ番号
+  - name: text
+    title: 本文
+  - name: cid_repaired_chars
+    title: CID から戻した文字数

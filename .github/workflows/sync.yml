@@ -36,7 +36,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: queria-io/dataset-shared/.github/workflows/sync.yml@67443c88b6ec355559c91bf866239e10073ccf83
+    uses: queria-io/dataset-shared/.github/workflows/sync.yml@d900b677f5c9faeac9283b803fd0764f22e3d72b
     with:
       dataset_name: mlit
       # 区間形状のタイル（実在する 18,004 枚）を毎回取りに行く。米国のランナーからは
