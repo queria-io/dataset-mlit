@@ -184,7 +184,7 @@ bash scripts/build.sh
 - 行政処分: 分野ごとに検索結果の一覧の全ページと、1 件ごとの概要のページを、1 秒に 1 回の頻度で取得します（全分野で約 4,000 ページ、約 1 時間）。概要のページは取得済みなら取り直しません
 - 入札結果: 局の掲載ページ（年度別のページを含む）から Excel のリンクを集めて取得し、原本を `data/assets/<sha256>.<拡張子>` に置きます。`scripts/build.sh` が `FDL_ASSETS` にこのフォルダを渡し、`fdl commit` がリポジトリに無い原本だけを上げます。原本の一覧は前のバージョンの `bid.source_file` を引き継ぎ、手元に無い原本はリポジトリのアセットから取得します
 - 国土交通白書: 年版ごとの一括 PDF を取得し、PyMuPDF でページごとに文字を取り出します。CID から文字に戻す対応表は、Adobe の [mapping-resources-pdf](https://github.com/adobe-type-tools/mapping-resources-pdf) の Adobe-Japan1-UCS2 をコミットを固定して取得します
-- 計画・通知等: 行政事業レビュー見える化サイトの CSV（1-3 政策・施策、法令等）から www.mlit.go.jp の PDF の URL を集め、1 秒に 1 回の頻度で取得します。手元で流すときは、取得済みの URL を `data/plans/index.json` で覚えて取り直しません
+- 計画・通知等: 行政事業レビューのシートをテーブルにした Queria の公開データセット queria/rssystem の `review.related_plans` から www.mlit.go.jp の PDF の URL を集め、1 秒に 1 回の頻度で取得します。手元で流すときは、取得済みの URL を `data/plans/index.json` で覚えて取り直しません。取得と Parquet 化は dataset-shared の `review_plans.py` で行います
 
 GitHub Actions の定期実行（毎月 11 日）では、行政処分・入札結果だけを取り直します（`python main.py monthly` と同じ）。ほかのテーブルは前のバージョンのまま残ります。
 
