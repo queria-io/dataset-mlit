@@ -23,6 +23,7 @@ import unicodedata
 from datetime import date, datetime, timedelta, timezone
 from hashlib import sha256
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 
 import duckdb
@@ -138,7 +139,15 @@ def _text(fragment: str) -> str:
 
 
 def _links(page_url: str) -> list[tuple[str, str]]:
-    body = _get(page_url, not_found_ok=True)
+    try:
+        body = _get(page_url, not_found_ok=True)
+    except HTTPError:
+        raise
+    except (URLError, TimeoutError) as error:
+        # 名前解決できない・応答が無いサイトは、再試行しても繋がらなければ飛ばす。
+        # その局のファイルは前のバージョンの一覧（_previous_sources）に残る
+        logger.warning("bids: %s に接続できない（%s）", page_url, error)
+        return []
     if body is None:
         logger.info("bids: %s は無い", page_url)
         return []
