@@ -48,9 +48,9 @@
 | `bid.source_file` | 入札結果データの Excel の原本の一覧。sha256 の列から原本を取得できる |
 | `white_paper.documents` | 1 行が 1 年版の国土交通白書の PDF。sha256・URL・ページ数 |
 | `white_paper.pages` | 1 行が 1 ページ。本文・ページ番号の表記・PDF のそのページへの URL |
+| `white_paper.page_bigrams` | 1 行が 1 ページ × 2 文字の組。出現回数を持ち、全文検索の索引に使う |
 | `plans.documents` | 1 行が 1 つの計画・通知等の PDF の URL。名前・sha256・ページ数 |
 | `plans.pages` | 1 行が 1 ページ。本文 |
-| `white_paper.page_bigrams` | 1 行が 1 ページ × 2 文字の組。出現回数を持ち、全文検索の索引に使う |
 
 ## 使い方
 

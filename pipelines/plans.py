@@ -16,10 +16,13 @@ import json
 import logging
 import time
 import zipfile
+from collections import Counter, defaultdict
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.parse import quote, urlsplit
 
 import duckdb
+import pymupdf
 
 from shared.fetch import fetch, write_atomic
 from shared.pdf_text import load_cid_map, pdf_pages
@@ -59,17 +62,24 @@ def is_target(url: str) -> bool:
 
 
 def plan_urls() -> dict[str, str]:
-    """計画・通知等の URL → 名前。同じ URL は後の年度の名前を使う。"""
+    """計画・通知等の URL → 名前。
+
+    同じ URL は後の年度のシートの名前を使う。同じ年度のシートに複数の名前があるときは、
+    最も多く書かれている名前を使う（同数なら先に出てきた名前）。
+    """
     years = range(FIRST_YEAR, datetime.date.today().year + 2)
     bodies = [b for b in map(review_zip, years) if b is not None]
     if not bodies:
         raise SystemExit("plans: 行政事業レビューの CSV が取れない")
-    return {
-        row["計画通知等URL"].strip(): row["計画通知名"].strip()
-        for body in bodies
-        for row in review_rows(body)
-        if is_target(row.get("計画通知等URL") or "")
-    }
+    titles: dict[str, str] = {}
+    for body in bodies:
+        names: defaultdict[str, Counter[str]] = defaultdict(Counter)
+        for row in review_rows(body):
+            url = (row.get("計画通知等URL") or "").strip()
+            if is_target(url):
+                names[url][(row.get("計画通知名") or "").strip()] += 1
+        titles |= {url: counts.most_common(1)[0][0] for url, counts in names.items()}
+    return titles
 
 
 def read_index() -> dict[str, dict]:
@@ -79,25 +89,36 @@ def read_index() -> dict[str, dict]:
 def download_plans() -> None:
     """PDF を data/plans/<sha256>.pdf に置き、URL → sha256・名前・取得日時を index.json に書く。"""
     PDF_DIR.mkdir(parents=True, exist_ok=True)
-    index = read_index()
     urls = plan_urls()
-    for url, title in urls.items():
-        if url in index:
-            index[url]["title"] = title
-            continue
-        time.sleep(INTERVAL)
-        body = fetch(url, user_agent=USER_AGENT, not_found_ok=True)
-        if body is None:
-            logger.info("plans: 404: %s", url)
-            continue
-        if not body.startswith(b"%PDF"):
-            logger.info("plans: PDF ではない応答: %s", url)
-            continue
-        digest = hashlib.sha256(body).hexdigest()
-        write_atomic(PDF_DIR / f"{digest}.pdf", body)
-        fetched_at = datetime.datetime.now(datetime.UTC).isoformat()
-        index[url] = {"sha256": digest, "title": title, "fetched_at": fetched_at}
-    write_atomic(INDEX, json.dumps(index, ensure_ascii=False, indent=1).encode())
+    # シートから消えた URL は外す
+    index = {url: entry for url, entry in read_index().items() if url in urls}
+    try:
+        for url, title in urls.items():
+            if url in index:
+                index[url]["title"] = title
+                continue
+            time.sleep(INTERVAL)
+            try:
+                body = fetch(url, user_agent=USER_AGENT, not_found_ok=True)
+            except HTTPError as error:
+                # 404 以外のクライアントエラー（403・410 など）もリンク切れとして扱う。
+                # 5xx は再試行しても失敗したときにそのまま止める
+                if error.code >= 500:
+                    raise
+                body = None
+            if body is None:
+                logger.info("plans: 取得できない: %s", url)
+                continue
+            if not body.startswith(b"%PDF"):
+                logger.info("plans: PDF ではない応答: %s", url)
+                continue
+            digest = hashlib.sha256(body).hexdigest()
+            write_atomic(PDF_DIR / f"{digest}.pdf", body)
+            fetched_at = datetime.datetime.now(datetime.UTC).isoformat()
+            index[url] = {"sha256": digest, "title": title, "fetched_at": fetched_at}
+    finally:
+        # 途中で止まっても、取得済みの PDF を次の実行で取り直さない
+        write_atomic(INDEX, json.dumps(index, ensure_ascii=False, indent=1).encode())
     logger.info("plans: %d URL のうち %d 件の PDF", len(urls), len(index))
 
 
@@ -107,15 +128,22 @@ def build_plans_parquet() -> None:
     documents, pages = [], {}
     for url, entry in index.items():
         digest = entry["sha256"]
-        data = (PDF_DIR / f"{digest}.pdf").read_bytes()
+        path = PDF_DIR / f"{digest}.pdf"
         if digest not in pages:
-            pages[digest] = pdf_pages(data, cid_map)
+            try:
+                pages[digest] = pdf_pages(path.read_bytes(), cid_map)
+            except (pymupdf.FileDataError, ValueError) as error:
+                # 壊れた PDF・パスワードの要る PDF は開けない
+                logger.info("plans: PDF を開けない: %s (%s)", url, error)
+                pages[digest] = None
+        if pages[digest] is None:
+            continue
         documents.append(
             (
                 url,
                 digest,
                 entry["title"],
-                len(data),
+                path.stat().st_size,
                 len(pages[digest]),
                 entry["fetched_at"],
             )
@@ -134,7 +162,7 @@ def build_plans_parquet() -> None:
     )
     con.executemany(
         "INSERT INTO pages VALUES (?, ?, ?, ?, ?)",
-        [(digest, *page) for digest, ps in pages.items() for page in ps],
+        [(digest, *page) for digest, ps in pages.items() for page in ps or ()],
     )
     for table in ("documents", "pages"):
         destination = PARQUET_DIR / f"plans_{table}.parquet"
@@ -142,5 +170,7 @@ def build_plans_parquet() -> None:
             f"COPY {table} TO '{destination}' (FORMAT parquet, COMPRESSION zstd)"
         )
     logger.info(
-        "plans: %d 文書 %d ページ", len(documents), sum(map(len, pages.values()))
+        "plans: %d 文書 %d ページ",
+        len(documents),
+        sum(len(ps or []) for ps in pages.values()),
     )
