@@ -48,7 +48,6 @@
 | `bid.source_file` | 入札結果データの Excel の原本の一覧。sha256 の列から原本を取得できる |
 | `white_paper.documents` | 1 行が 1 年版の国土交通白書の PDF。sha256・URL・ページ数 |
 | `white_paper.pages` | 1 行が 1 ページ。本文・ページ番号の表記・PDF のそのページへの URL |
-| `white_paper.page_bigrams` | 1 行が 1 ページ × 2 文字の組。出現回数を持ち、全文検索の索引に使う |
 | `plans.documents` | 1 行が 1 つの計画・通知等の PDF の URL。名前・sha256・ページ数 |
 | `plans.pages` | 1 行が 1 ページ。本文 |
 
@@ -135,37 +134,14 @@ LIMIT 20;
 - `page` は PDF の先頭から数えたページ、`page_label` は紙面に印刷されたページ番号です
 - 図表には国土交通省以外の著作物が含まれることがあります。このデータセットは本文の文字だけを持ち、PDF の原本は保存していません
 
-「下水道管路」を含むページを、BM25 の順に並べる:
-
-```sql
-WITH q AS (
-    SELECT DISTINCT substr(w, i, 2) AS gram
-    FROM (SELECT '下水道管路' AS w), range(1, length(w)) AS r(i)
-),
-hits AS (SELECT b.* FROM mlit.white_paper.page_bigrams AS b JOIN q USING (gram)),
-len AS (SELECT sha256, page, sum(tf) AS dl FROM mlit.white_paper.page_bigrams GROUP BY ALL),
-stats AS (SELECT count(*) AS n, avg(dl) AS avgdl FROM len),
-df AS (SELECT gram, count(*) AS df FROM hits GROUP BY gram)
-SELECT p.edition, p.page, p.page_url,
-    sum(ln(1 + (s.n - df.df + 0.5) / (df.df + 0.5)) * h.tf * 2.2
-        / (h.tf + 1.2 * (0.25 + 0.75 * l.dl / s.avgdl))) AS score
-FROM hits AS h
-JOIN df USING (gram)
-JOIN len AS l USING (sha256, page)
-JOIN mlit.white_paper.pages AS p USING (sha256, page)
-CROSS JOIN stats AS s
-GROUP BY ALL
-HAVING count(*) = (SELECT count(*) FROM q)
-ORDER BY score DESC
-LIMIT 5;
-```
+全文検索は、府省の文書をまとめた Queria のデータセット `queria/gov_documents` で行えます。2 文字ずつ区切った索引（`search.page_bigrams`）を持ち、BM25 の順に並べる例がその README にあります。
 
 ## 計画・通知等の注意
 
 - 行政事業レビューのシート（2024 年度から）の「関係する計画・通知等」の URL のうち、www.mlit.go.jp の PDF だけを取り込んでいます。ほかのサイトの文書と HTML のページは入っていません
 - シートの URL には、すでに消えたページ（404）が含まれます。取得できなかった URL は `plans.documents` に入っていません
 - `fetched_at` は PDF を取得した日時です。国土交通省のサイトで PDF が差し替えられていると、中身が違うことがあります
-- 全文検索の索引は持っていません。`plans.pages` の `text` を検索してください
+- 全文検索の索引は持っていません。全文検索は `queria/gov_documents` で行えます
 
 ## ビルド
 
