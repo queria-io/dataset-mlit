@@ -17,7 +17,7 @@ import logging
 import re
 import unicodedata
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import duckdb
@@ -60,7 +60,7 @@ def load_cid_map() -> dict[int, str]:
     table: dict[int, str] = {}
     section = None
     for line in text.splitlines():
-        if line.endswith("beginbfchar") or line.endswith("beginbfrange"):
+        if line.endswith(("beginbfchar", "beginbfrange")):
             section = line.split()[-1]
             continue
         if line.startswith("end"):
@@ -101,10 +101,15 @@ def page_text(page: pymupdf.Page, cid_map: dict[int, str]) -> tuple[str, int]:
 
     def char(span: dict, c: dict) -> str:
         code = ord(c["c"])
-        return cid_map.get(code, "") if span["font"] in cid_fonts and code < 0x3000 else c["c"]
+        return (
+            cid_map.get(code, "")
+            if span["font"] in cid_fonts and code < 0x3000
+            else c["c"]
+        )
 
     text = "\n".join(
-        "".join(char(span, c) for span in spans for c in span["chars"]) for spans in lines
+        "".join(char(span, c) for span in spans for c in span["chars"])
+        for spans in lines
     )
     repaired = sum(
         1
@@ -132,7 +137,7 @@ def download_white_paper() -> None:
 
 def build_white_paper_parquet() -> None:
     cid_map = load_cid_map()
-    fetched_at = datetime.now(timezone.utc)
+    fetched_at = datetime.now(UTC)
     documents, pages = [], []
     for edition, url in EDITIONS.items():
         data = (PDF_DIR / f"{edition}.pdf").read_bytes()
@@ -142,7 +147,15 @@ def build_white_paper_parquet() -> None:
             text, repaired = page_text(page, cid_map)
             pages.append((digest, number, page.get_label() or None, text, repaired))
         documents.append(
-            (digest, edition, f"令和{edition - 2018}年版 国土交通白書", url, len(data), doc.page_count, fetched_at)
+            (
+                digest,
+                edition,
+                f"令和{edition - 2018}年版 国土交通白書",
+                url,
+                len(data),
+                doc.page_count,
+                fetched_at,
+            )
         )
         logger.info("white_paper: %d年版 %d ページ", edition, doc.page_count)
 
@@ -160,5 +173,7 @@ def build_white_paper_parquet() -> None:
     con.executemany("INSERT INTO pages VALUES (?, ?, ?, ?, ?)", pages)
     for table in ("documents", "pages"):
         destination = PARQUET_DIR / f"white_paper_{table}.parquet"
-        con.execute(f"COPY {table} TO '{destination}' (FORMAT parquet, COMPRESSION zstd)")
+        con.execute(
+            f"COPY {table} TO '{destination}' (FORMAT parquet, COMPRESSION zstd)"
+        )
     logger.info("white_paper: %d 文書 %d ページ", len(documents), len(pages))
