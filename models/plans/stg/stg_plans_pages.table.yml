@@ -1,0 +1,4 @@
+schema: plans
+name: stg_pages
+description: raw_pages の列を選んだ中間テーブル。
+annotations: { queria: { published: false } }

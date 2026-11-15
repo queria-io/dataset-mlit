@@ -1,0 +1,23 @@
+SELECT
+    field_code,
+    sector,
+    field,
+    record_no,
+    action_date,
+    authority,
+    name,
+    corporate_number,
+    license_number,
+    address,
+    office_name,
+    office_address,
+    action_type,
+    action_period,
+    legal_basis,
+    licensed_trades,
+    violation_summary,
+    action_detail,
+    note,
+    detail_url,
+    source_url
+FROM {{ ref('raw_negative_info') }}

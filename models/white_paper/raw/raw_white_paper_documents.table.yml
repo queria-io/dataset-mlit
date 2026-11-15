@@ -1,0 +1,4 @@
+schema: white_paper
+name: raw_documents
+description: 国土交通白書の PDF の一覧を、取得したままの形で読み込んだ中間テーブル。
+annotations: { queria: { published: false } }

@@ -1,0 +1,4 @@
+schema: white_paper
+name: stg_documents
+description: raw_documents の列を選んだ中間テーブル。
+annotations: { queria: { published: false } }

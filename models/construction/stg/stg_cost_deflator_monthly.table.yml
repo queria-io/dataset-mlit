@@ -1,0 +1,4 @@
+schema: construction
+name: stg_cost_deflator_monthly
+description: raw_cost_deflator_monthly の列を選び、月の初日 period_start を付けた中間テーブル。
+annotations: { queria: { published: false } }

@@ -1,0 +1,4 @@
+schema: plans
+name: raw_pages
+description: 計画・通知等の PDF から取り出したページの本文を、取得したままの形で読み込んだ中間テーブル。
+annotations: { queria: { published: false } }

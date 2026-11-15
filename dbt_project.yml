@@ -10,35 +10,4 @@ clean-targets: ["target", "dbt_packages"]
 models:
   mlit:
     +database: mlit
-    +materialized: view
-    road:
-      raw:
-        +materialized: table
-      stg:
-        +materialized: table
-      mart:
-        +materialized: table
-    real_estate:
-      raw:
-        +materialized: table
-      mart:
-        +materialized: table
-    construction:
-      raw:
-        +materialized: table
-      mart:
-        +materialized: table
-    disposition:
-      raw:
-        +materialized: table
-      mart:
-        +materialized: table
-    bid:
-      raw:
-        +materialized: table
-      mart:
-        +materialized: table
-    white_paper:
-      +materialized: table
-    plans:
-      +materialized: table
+    +materialized: table
