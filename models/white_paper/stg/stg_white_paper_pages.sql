@@ -1,5 +1,3 @@
-{{ config(alias='stg_pages') }}
-
 SELECT
     sha256,
     page,

@@ -1,5 +1,3 @@
-{{ config(alias='stg_documents') }}
-
 SELECT
     sha256,
     edition,
