@@ -1,0 +1,4 @@
+schema: plans
+name: raw_plans_pages
+description: 計画・通知等の PDF のページの本文を、pipelines が書いた Parquet のまま読んだもの
+annotations: { queria: { published: false } }

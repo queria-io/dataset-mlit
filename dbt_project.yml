@@ -41,4 +41,9 @@ models:
     white_paper:
       +materialized: table
     plans:
-      +materialized: table
+      raw:
+        +materialized: table
+      stg:
+        +materialized: view
+      mart:
+        +materialized: table
