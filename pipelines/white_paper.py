@@ -13,14 +13,13 @@
 import logging
 from pathlib import Path
 
-from pipelines.sources import USER_AGENT, SourceFiles, write_parquet
+from pipelines.sources import PARQUET_DIR, USER_AGENT, SourceFiles, write_parquet
 from shared.pdf_text import load_cid_map, pdf_pages
 
 logger = logging.getLogger("pipelines")
 
 DATA_DIR = Path("data")
 PDF_DIR = DATA_DIR / "white_paper"
-PARQUET_DIR = DATA_DIR / "parquet"
 PAGE_URL = "https://www.mlit.go.jp/statistics/file000004.html"
 
 PAGE_COLUMNS = {
@@ -48,7 +47,11 @@ def download_white_paper() -> None:
     for edition, url in EDITIONS.items():
         path = PDF_DIR / f"{edition}.pdf"
         sources.fetch(url, path, page_url=PAGE_URL, edition=edition)
-        if not path.read_bytes().startswith(b"%PDF"):
+        with path.open("rb") as handle:
+            is_pdf = handle.read(4) == b"%PDF"
+        if not is_pdf:
+            # PDF でない応答を残すと、次の取得で前回の ETag が 304 を返し、その中身を PDF として読む
+            path.unlink()
             raise SystemExit(f"white_paper: PDF ではない応答: {url}")
     sources.write()
 

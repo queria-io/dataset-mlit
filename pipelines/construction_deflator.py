@@ -23,6 +23,8 @@ from pathlib import Path
 
 from pipelines.sources import (
     PARQUET_DIR,
+    REQUEST_TIMEOUT,
+    USER_AGENT,
     Sheets,
     SourceFiles,
     read_workbook,
@@ -43,9 +45,6 @@ PREFIXES = {
 
 DATA_DIR = Path("data")
 XLSX_DIR = DATA_DIR / "xlsx"
-
-USER_AGENT = "queria-dataset-mlit (+https://queria.io/)"
-REQUEST_TIMEOUT = 60
 
 # 見出しの段（0 始まりの行番号）
 HEADER_ROWS = range(2, 10)

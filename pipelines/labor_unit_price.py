@@ -28,6 +28,8 @@ from pathlib import Path
 
 from pipelines.sources import (
     PARQUET_DIR,
+    REQUEST_TIMEOUT,
+    USER_AGENT,
     PdfPages,
     SourceFiles,
     read_pdf_tables,
@@ -42,9 +44,6 @@ BASE_URL = "https://www.mlit.go.jp"
 
 DATA_DIR = Path("data")
 PDF_DIR = DATA_DIR / "pdf" / "design_labor_unit_price"
-
-USER_AGENT = "queria-dataset-mlit (+https://queria.io/)"
-REQUEST_TIMEOUT = 60
 
 # 案内ページのリンク文言。「令和８年３月から適用する公共工事設計労務単価」「平成２５年度公共工事設計労務単価」
 TITLE = re.compile(r"^(令和|平成)(\d+|元)年(?:(\d+)月から適用する|度)公共工事設計労務単価")
@@ -164,14 +163,18 @@ def download_labor_unit_price() -> None:
     if not releases:
         raise RuntimeError(f"{PAGE_URL}: 記者発表へのリンクが見つからない")
     sources = SourceFiles("labor_unit_price", {"applied_from": "DATE"})
+    # 前回取得した記者発表の PDF の URL。記者発表ページは取り直さず、PDF にだけ条件付き GET を送る
+    known = {row["page_url"]: row["url"] for row in sources.previous.values()}
     for applied_from, url in releases:
-        press = fetch(url, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT).decode("utf-8")
-        # 記者発表ページの最初の PDF が本文（2点目以降は参考資料）
-        match = re.search(r'href="([^"]+\.pdf)"', press)
-        if match is None:
-            raise RuntimeError(f"{url}: PDF が見つからない")
-        href = match.group(1)
-        pdf_url = href if href.startswith("http") else BASE_URL + href
+        pdf_url = known.get(url) if _path(applied_from).exists() else None
+        if pdf_url is None:
+            press = fetch(url, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT).decode("utf-8")
+            # 記者発表ページの最初の PDF が本文（2点目以降は参考資料）
+            match = re.search(r'href="([^"]+\.pdf)"', press)
+            if match is None:
+                raise RuntimeError(f"{url}: PDF が見つからない")
+            href = match.group(1)
+            pdf_url = href if href.startswith("http") else BASE_URL + href
         sources.fetch(pdf_url, _path(applied_from), page_url=url, applied_from=applied_from)
     sources.write()
 

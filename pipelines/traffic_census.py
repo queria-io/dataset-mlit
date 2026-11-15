@@ -112,9 +112,13 @@ def _download_csv(kind: str, url_template: str) -> None:
     for pref in PREFECTURES:
         original = ORIGINAL_CSV_DIR / kind / f"{pref}.csv"
         row = sources.fetch(url_template.format(pref=pref), original, page_url=PAGE_URL, table_kind=kind, prefecture_code=pref)
-        for stale in destination.glob(f"{pref}.*.csv"):
-            stale.unlink()
-        write_atomic(destination / f"{pref}.{row['sha256']}.csv", _normalize_csv(original.read_bytes().decode("cp932")))
+        converted = destination / f"{pref}.{row['sha256']}.csv"
+        if not converted.exists():
+            write_atomic(converted, _normalize_csv(original.read_bytes().decode("cp932")))
+        # 前回の中身のファイルと、sha256 の無い名前（<都道府県>.csv）のファイルは raw に読ませない
+        for stale in destination.glob(f"{pref}.*csv"):
+            if stale != converted:
+                stale.unlink()
     sources.write()
 
 
@@ -152,6 +156,8 @@ def _download_tile(sources: SourceFiles, tile: tuple[str, int, int]) -> bool:
     final = _tile_path(layer, x, y, row["sha256"])
     if path != final:
         path.replace(final)
+    # sha256 の無い名前（<x>_<y>.geojson）のタイルは raw の glob に入り、同じ feature を二重に読ませる
+    (TILE_DIR / layer / f"{x}_{y}.geojson").unlink(missing_ok=True)
     sources.rows.append({**row, "page_url": PAGE_URL, "layer": layer, "x": x, "y": y})
     return True
 
