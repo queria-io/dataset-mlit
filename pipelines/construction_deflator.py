@@ -21,10 +21,14 @@ import re
 import unicodedata
 from pathlib import Path
 
-import duckdb
-import openpyxl
-
-from shared.fetch import fetch, replacing, write_atomic
+from pipelines.sources import (
+    PARQUET_DIR,
+    Sheets,
+    SourceFiles,
+    read_workbook,
+    write_parquet,
+)
+from shared.fetch import fetch
 
 logger = logging.getLogger("pipelines")
 
@@ -39,7 +43,6 @@ PREFIXES = {
 
 DATA_DIR = Path("data")
 XLSX_DIR = DATA_DIR / "xlsx"
-PARQUET_DIR = DATA_DIR / "parquet"
 
 USER_AGENT = "queria-dataset-mlit (+https://queria.io/)"
 REQUEST_TIMEOUT = 60
@@ -47,6 +50,7 @@ REQUEST_TIMEOUT = 60
 # 見出しの段（0 始まりの行番号）
 HEADER_ROWS = range(2, 10)
 
+# raw の列。source_* は元の Excel のファイル・シート・行
 COLUMNS = {
     "category_order": "INTEGER",
     "category": "VARCHAR",
@@ -58,25 +62,42 @@ COLUMNS = {
     "fiscal_year": "INTEGER",
     "is_provisional": "BOOLEAN",
     "deflator": "DOUBLE",
+    "source_sha256": "VARCHAR",
+    "source_sheet": "VARCHAR",
+    "source_row": "INTEGER",
 }
 
 
 def download_construction_deflator() -> None:
     """建設工事費デフレーターの Excel（月次・年度次）をダウンロードする。
 
-    毎月の公表で中身が入れ替わるので、取得済みでも取り直す。
+    毎月の公表で中身が入れ替わるので、前回から変わっていれば取り直す。
     """
     page = fetch(PAGE_URL, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT).decode("utf-8")
-    XLSX_DIR.mkdir(parents=True, exist_ok=True)
+    sources = SourceFiles("construction_deflator", {"table_kind": "VARCHAR"})
     for name, prefix in PREFIXES.items():
         match = re.search(r'href="([^"]*/' + re.escape(prefix) + r'[^"/]*\.xlsx)"', page)
         if match is None:
             raise RuntimeError(f"{PAGE_URL}: {prefix}*.xlsx が見つからない")
         href = match.group(1)
         url = href if href.startswith("http") else BASE_URL + href
-        body = fetch(url, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT)
-        write_atomic(XLSX_DIR / f"construction_deflator_{name}.xlsx", body)
-        logger.info("construction deflator: downloaded %s (%s bytes)", url, len(body))
+        sources.fetch(url, _path(name), page_url=PAGE_URL, table_kind=name)
+    sources.write()
+
+
+def _path(name: str) -> Path:
+    return XLSX_DIR / f"construction_deflator_{name}.xlsx"
+
+
+def build_construction_deflator_parquet() -> None:
+    """Excel を縦持ちにして Parquet に書く。1 行 = 工事種類 × 月（年度）。"""
+    for row in SourceFiles("construction_deflator").previous.values():
+        kind = row["table_kind"]
+        records = [{**r, "source_sha256": row["sha256"]} for r in PARSERS[kind](read_workbook(_path(kind)))]
+        if not records:
+            raise RuntimeError(f"construction deflator ({kind}): 0 rows")
+        write_parquet(PARQUET_DIR / f"construction_deflator_{kind}.parquet", COLUMNS, records)
+        logger.info("construction deflator (%s): %d rows", kind, len(records))
 
 
 def _normalize(text: str) -> str:
@@ -132,7 +153,7 @@ def _fiscal_year(cell) -> tuple[int, bool] | None:
     return None
 
 
-def _records(categories, values, year, month, fiscal_year, is_provisional) -> list[dict]:
+def _records(categories, values, year, month, fiscal_year, is_provisional, sheet, row_no) -> list[dict]:
     records = []
     for order, (column, path) in enumerate(categories, start=1):
         value = _value(values[column])
@@ -150,70 +171,49 @@ def _records(categories, values, year, month, fiscal_year, is_provisional) -> li
                 "fiscal_year": fiscal_year,
                 "is_provisional": is_provisional,
                 "deflator": value,
+                "source_sheet": sheet,
+                "source_row": row_no,
             }
         )
     return records
 
 
-def _parse_monthly(path: Path) -> list[dict]:
-    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    sheet = next(sheet for sheet in workbook.worksheets if "月別" in sheet.title)
-    rows = list(sheet.iter_rows(values_only=True))
+def parse_monthly(sheets: Sheets) -> list[dict]:
+    """月次の Excel（read_workbook の形）を、1 行 = 工事種類 × 月の縦持ちにする。"""
+    title, rows = next((title, rows) for title, rows in sheets if "月別" in title)
     if rows[HEADER_ROWS[0]][:2] != ("年", "月"):
-        raise ValueError(f"{path}: 月別シートの見出しが想定と違う: {rows[HEADER_ROWS[0]][:2]!r}")
+        raise ValueError(f"月別シートの見出しが想定と違う: {rows[HEADER_ROWS[0]][:2]!r}")
     categories = _categories(rows, first=2)
     records = []
-    for row in rows[HEADER_ROWS[-1] + 1 :]:
+    for row_no, row in enumerate(rows[HEADER_ROWS[-1] + 1 :], HEADER_ROWS[-1] + 2):
         year, month = row[0], row[1]
         if not (isinstance(year, int) and isinstance(month, int)):
             continue
         fiscal_year = year if month >= 4 else year - 1
         # 年度末までの月は行だけ先に用意されていて、値が空
-        records += _records(categories, row, year, month, fiscal_year, None)
+        records += _records(categories, row, year, month, fiscal_year, None, title, row_no)
     return records
 
 
-def _parse_fiscal_year(path: Path) -> list[dict]:
-    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    sheet = workbook.worksheets[0]
-    rows = list(sheet.iter_rows(values_only=True))
+def parse_fiscal_year(sheets: Sheets) -> list[dict]:
+    """年度次の Excel（read_workbook の形）を、1 行 = 工事種類 × 年度の縦持ちにする。"""
+    title, rows = sheets[0]
     if rows[HEADER_ROWS[0]][0] != "年度":
-        raise ValueError(f"{path}: 年度別シートの見出しが想定と違う: {rows[HEADER_ROWS[0]][0]!r}")
+        raise ValueError(f"年度別シートの見出しが想定と違う: {rows[HEADER_ROWS[0]][0]!r}")
     categories = _categories(rows, first=1)
     records = []
-    for row in rows[HEADER_ROWS[-1] + 1 :]:
+    for row_no, row in enumerate(rows[HEADER_ROWS[-1] + 1 :], HEADER_ROWS[-1] + 2):
         parsed = _fiscal_year(row[0])
         if parsed is None:
             continue
         fiscal_year, is_provisional = parsed
-        records += _records(categories, row, None, None, fiscal_year, is_provisional)
+        records += _records(categories, row, None, None, fiscal_year, is_provisional, title, row_no)
     return records
 
 
 PARSERS = {
-    "monthly": _parse_monthly,
-    "fiscal_year": _parse_fiscal_year,
+    "monthly": parse_monthly,
+    "fiscal_year": parse_fiscal_year,
 }
 
 
-def build_construction_deflator_parquet() -> None:
-    """Excel を縦持ちにして Parquet に書く。1行 = 工事種類 × 期間。"""
-    PARQUET_DIR.mkdir(parents=True, exist_ok=True)
-    for name, parse in PARSERS.items():
-        records = parse(XLSX_DIR / f"construction_deflator_{name}.xlsx")
-        destination = PARQUET_DIR / f"construction_deflator_{name}.parquet"
-        with replacing(destination) as partial:
-            if not records:
-                raise RuntimeError(f"construction deflator ({name}): 0 rows")
-            connection = duckdb.connect()
-            columns = ", ".join(f"{column} {kind}" for column, kind in COLUMNS.items())
-            connection.execute(f"CREATE TABLE deflator ({columns})")
-            connection.executemany(
-                f"INSERT INTO deflator VALUES ({', '.join('?' for _ in COLUMNS)})",
-                [tuple(record[column] for column in COLUMNS) for record in records],
-            )
-            connection.execute(
-                "COPY deflator TO $destination (FORMAT parquet)",
-                {"destination": str(partial)},
-            )
-        logger.info("construction deflator (%s): %d rows -> %s", name, len(records), destination)

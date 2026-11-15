@@ -19,5 +19,8 @@ SELECT
     area_individual_to_corporation,
     area_corporation_to_individual,
     area_corporation_to_corporation,
-    area_corporate_net_purchase
+    area_corporate_net_purchase,
+    source_sha256,
+    source_sheet,
+    source_row
 FROM {{ ref('raw_transaction_volume') }}

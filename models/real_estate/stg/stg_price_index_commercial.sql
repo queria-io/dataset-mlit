@@ -9,5 +9,8 @@ SELECT
     price_index,
     change_basis,
     change_rate,
-    sample_count
+    sample_count,
+    source_sha256,
+    source_sheet,
+    source_row
 FROM {{ ref('raw_price_index_commercial') }}

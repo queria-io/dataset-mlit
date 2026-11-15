@@ -10,7 +10,8 @@ SELECT
         "路線名_1",
         filename
     ),
-    regexp_extract(filename, '(\d{2})\.csv$', 1) AS prefecture_code
+    regexp_extract(filename, '(\d{2})\.[0-9a-f]{64}\.csv$', 1) AS prefecture_code,
+    regexp_extract(filename, '([0-9a-f]{64})\.csv$', 1) AS source_sha256
 FROM read_csv(
     'data/csv/kasho/*.csv',
     header = true,

@@ -19,21 +19,24 @@ https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
 import datetime
 import logging
 
-import duckdb
-import openpyxl
-
 from pipelines.price_index import (
     PAGE_URL,
-    PARQUET_DIR,
     PREFECTURE_CODES,
-    REQUEST_TIMEOUT,
-    USER_AGENT,
     XLSX_DIR,
     _normalize,
     _region,
     _xlsx_url,
 )
-from shared.fetch import fetch, replacing, write_atomic
+from pipelines.sources import (
+    PARQUET_DIR,
+    REQUEST_TIMEOUT,
+    USER_AGENT,
+    Sheets,
+    SourceFiles,
+    read_workbook,
+    write_parquet,
+)
+from shared.fetch import fetch
 
 logger = logging.getLogger("pipelines")
 
@@ -41,7 +44,6 @@ logger = logging.getLogger("pipelines")
 LABEL = "不動産取引件数・面積"
 
 XLSX_PATH = XLSX_DIR / "transaction_volume.xlsx"
-PARQUET_PATH = PARQUET_DIR / "transaction_volume.parquet"
 
 # 用途の名前がある行と、14列の見出しがある行（シートの上から数えた位置）
 CATEGORY_ROW = 4
@@ -74,20 +76,31 @@ COLUMNS = {
     "year": "INTEGER",
     "month": "INTEGER",
     **{name: kind for _, name, kind in MEASURES},
+    "source_sha256": "VARCHAR",
+    "source_sheet": "VARCHAR",
+    "source_row": "INTEGER",
 }
 
 
 def download_transaction_volume() -> None:
     """不動産取引件数・面積の Excel をダウンロードする。
 
-    毎月の公表で中身が入れ替わるので、取得済みでも取り直す。
+    毎月の公表で中身が入れ替わるので、前回から変わっていれば取り直す。
     """
     page = fetch(PAGE_URL, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT).decode("utf-8")
-    url = _xlsx_url(page, LABEL)
-    body = fetch(url, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT)
-    XLSX_DIR.mkdir(parents=True, exist_ok=True)
-    write_atomic(XLSX_PATH, body)
-    logger.info("transaction volume: downloaded %s (%s bytes)", url, len(body))
+    sources = SourceFiles("transaction_volume", {"table_kind": "VARCHAR"})
+    sources.fetch(_xlsx_url(page, LABEL), XLSX_PATH, page_url=PAGE_URL, table_kind="transaction_volume")
+    sources.write()
+
+
+def build_transaction_volume_parquet() -> None:
+    """Excel を縦持ちにして Parquet に書く。1 行 = 地域 × 用途 × 月。"""
+    (row,) = SourceFiles("transaction_volume").previous.values()
+    records = [{**r, "source_sha256": row["sha256"]} for r in parse_workbook(read_workbook(XLSX_PATH))]
+    if not records:
+        raise RuntimeError("transaction volume: 0 rows")
+    write_parquet(PARQUET_DIR / "transaction_volume.parquet", COLUMNS, records)
+    logger.info("transaction volume: %d rows", len(records))
 
 
 def _blocks(rows: list[tuple]) -> list[tuple[int, str]]:
@@ -106,14 +119,13 @@ def _blocks(rows: list[tuple]) -> list[tuple[int, str]]:
     return blocks
 
 
-def _parse(path) -> list[dict]:
-    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
+def parse_workbook(sheets: Sheets) -> list[dict]:
+    """1 つの Excel（read_workbook の形）を、1 行 = 地域 × 用途 × 月の縦持ちにする。"""
     records = []
-    for sheet in workbook.worksheets:
-        rows = list(sheet.iter_rows(values_only=True))
+    for title, rows in sheets:
         region_code, region_name = _region(rows)
         blocks = _blocks(rows)
-        for row in rows[HEADER_ROW + 2 :]:
+        for row_no, row in enumerate(rows[HEADER_ROW + 2 :], HEADER_ROW + 3):
             head = row[0]
             # 末尾の注記の行など、先頭が日付でない行は読み飛ばす
             if not isinstance(head, datetime.datetime):
@@ -129,6 +141,8 @@ def _parse(path) -> list[dict]:
                     "period_start": datetime.date(head.year, head.month, 1),
                     "year": head.year,
                     "month": head.month,
+                    "source_sheet": title,
+                    "source_row": row_no,
                 }
                 for offset, (_, name, _) in enumerate(MEASURES):
                     record[name] = row[column + offset]
@@ -136,22 +150,3 @@ def _parse(path) -> list[dict]:
     return records
 
 
-def build_transaction_volume_parquet() -> None:
-    """Excel を縦持ちにして Parquet に書く。1行 = 地域 × 用途 × 月。"""
-    PARQUET_DIR.mkdir(parents=True, exist_ok=True)
-    records = _parse(XLSX_PATH)
-    with replacing(PARQUET_PATH) as partial:
-        if not records:
-            raise RuntimeError("transaction volume: 0 rows")
-        connection = duckdb.connect()
-        columns = ", ".join(f"{column} {kind}" for column, kind in COLUMNS.items())
-        connection.execute(f"CREATE TABLE transaction_volume ({columns})")
-        connection.executemany(
-            f"INSERT INTO transaction_volume VALUES ({', '.join('?' for _ in COLUMNS)})",
-            [tuple(record[column] for column in COLUMNS) for record in records],
-        )
-        connection.execute(
-            "COPY transaction_volume TO $destination (FORMAT parquet)",
-            {"destination": str(partial)},
-        )
-    logger.info("transaction volume: %d rows -> %s", len(records), PARQUET_PATH)

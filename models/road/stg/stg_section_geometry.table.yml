@@ -1,4 +1,0 @@
-schema: road
-name: stg_section_geometry
-description: raw_section_geometry の WKB をジオメトリにした中間テーブル。
-annotations: { queria: { published: false } }

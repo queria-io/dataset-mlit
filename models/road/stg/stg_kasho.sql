@@ -111,5 +111,6 @@ SELECT
         WHEN '3' THEN 'その他市街部'
         WHEN '4' THEN '平地部'
         WHEN '5' THEN '山地部'
-    END AS roadside_type
+    END AS roadside_type,
+    source_sha256
 FROM {{ ref('raw_kasho') }}

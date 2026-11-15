@@ -19,6 +19,7 @@ package-lock.yml
 
 # Data
 data/csv/
+data/csv_original/
 data/geojson_tiles/
 data/parquet/
 *.duckdb

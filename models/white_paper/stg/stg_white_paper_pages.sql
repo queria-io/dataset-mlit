@@ -1,5 +1,5 @@
 SELECT
-    sha256,
+    source_sha256 AS sha256,
     page,
     page_label,
     text,

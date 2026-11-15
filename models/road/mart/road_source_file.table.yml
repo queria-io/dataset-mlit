@@ -1,0 +1,23 @@
+schema: road
+name: source_file
+title: 道路交通センサスの元にしたファイル
+description: |-
+  road のテーブルの元にした道路交通センサスの CSV（都道府県ごと）と区間形状の GeoJSON タイルの一覧です。1 行が 1 つのファイルで、同じ URL でも中身が変われば別の行になります。traffic_census_section・traffic_census_hourly の source_sha256 と sha256 で結合できます。区間形状は複数のタイルから作るので、タイルとは結合できません。
+primary_key: [sha256]
+fields:
+  - name: url
+    title: 取得した URL
+  - name: page_url
+    title: 掲載されていたページの URL
+  - name: sha256
+    title: ファイルの sha256
+  - name: bytes
+    title: バイト数
+  - name: media_type
+    title: メディアタイプ
+  - name: retrieved_at
+    title: 取得した日時（UTC）
+  - name: etag
+    title: 取得したときの ETag ヘッダー
+  - name: last_modified
+    title: 取得したときの Last-Modified ヘッダー

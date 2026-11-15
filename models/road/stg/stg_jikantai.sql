@@ -47,5 +47,6 @@ SELECT
     TRY_CAST("時間帯別自動車類交通量（台／時）／３時台" AS INTEGER) AS volume_03,
     TRY_CAST("時間帯別自動車類交通量（台／時）／４時台" AS INTEGER) AS volume_04,
     TRY_CAST("時間帯別自動車類交通量（台／時）／５時台" AS INTEGER) AS volume_05,
-    TRY_CAST("時間帯別自動車類交通量（台／時）／６時台" AS INTEGER) AS volume_06
+    TRY_CAST("時間帯別自動車類交通量（台／時）／６時台" AS INTEGER) AS volume_06,
+    source_sha256
 FROM {{ ref('raw_jikantai') }}

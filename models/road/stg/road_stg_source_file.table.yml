@@ -1,0 +1,4 @@
+schema: road
+name: stg_source_file
+description: raw_source_file の共通の列を選び、取得日時を日時の型にした中間テーブル。
+annotations: { queria: { published: false } }

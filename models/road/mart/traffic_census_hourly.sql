@@ -57,7 +57,8 @@ SELECT
     -- 観測順に0から振り直した列を持たせる
     CASE WHEN hour >= 7 THEN hour - 7 ELSE hour + 17 END AS hour_order,
     hour BETWEEN 7 AND 18 AS is_daytime_12h,
-    volume
+    volume,
+    source_sha256
 FROM (
     SELECT
         *,

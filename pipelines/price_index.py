@@ -25,10 +25,16 @@ import re
 import unicodedata
 from pathlib import Path
 
-import duckdb
-import openpyxl
-
-from shared.fetch import fetch, replacing, write_atomic
+from pipelines.sources import (
+    PARQUET_DIR,
+    REQUEST_TIMEOUT,
+    USER_AGENT,
+    Sheets,
+    SourceFiles,
+    read_workbook,
+    write_parquet,
+)
+from shared.fetch import fetch
 
 logger = logging.getLogger("pipelines")
 
@@ -43,10 +49,6 @@ LABELS = {
 
 DATA_DIR = Path("data")
 XLSX_DIR = DATA_DIR / "xlsx"
-PARQUET_DIR = DATA_DIR / "parquet"
-
-USER_AGENT = "queria-dataset-mlit (+https://queria.io/)"
-REQUEST_TIMEOUT = 60
 
 # 国土交通省が集計する系列の始まり
 FIRST_MONTH = datetime.date(2008, 4, 1)
@@ -68,6 +70,9 @@ COLUMNS = {
     "change_basis": "VARCHAR",
     "change_rate": "DOUBLE",
     "sample_count": "INTEGER",
+    "source_sha256": "VARCHAR",
+    "source_sheet": "VARCHAR",
+    "source_row": "INTEGER",
 }
 
 
@@ -86,15 +91,28 @@ def _xlsx_url(page: str, label: str) -> str:
 def download_price_index() -> None:
     """不動産価格指数（住宅・商業用不動産）の Excel をダウンロードする。
 
-    毎月の公表で中身が入れ替わるので、取得済みでも取り直す。
+    毎月の公表で中身が入れ替わるので、前回から変わっていれば取り直す。
     """
     page = fetch(PAGE_URL, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT).decode("utf-8")
-    XLSX_DIR.mkdir(parents=True, exist_ok=True)
+    sources = SourceFiles("price_index", {"table_kind": "VARCHAR"})
     for name, label in LABELS.items():
-        url = _xlsx_url(page, label)
-        body = fetch(url, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT)
-        write_atomic(XLSX_DIR / f"price_index_{name}.xlsx", body)
-        logger.info("price index: downloaded %s (%s bytes)", url, len(body))
+        sources.fetch(_xlsx_url(page, label), _path(name), page_url=PAGE_URL, table_kind=f"price_index_{name}")
+    sources.write()
+
+
+def _path(name: str) -> Path:
+    return XLSX_DIR / f"price_index_{name}.xlsx"
+
+
+def build_price_index_parquet() -> None:
+    """Excel を縦持ちにして Parquet に書く。1 行 = 地域 × 季節調整の別 × 用途 × 期間。"""
+    for row in SourceFiles("price_index").previous.values():
+        name = row["table_kind"].removeprefix("price_index_")
+        records = [{**r, "source_sha256": row["sha256"]} for r in parse_workbook(read_workbook(_path(name)))]
+        if not records:
+            raise RuntimeError(f"price index ({name}): 0 rows")
+        write_parquet(PARQUET_DIR / f"price_index_{name}.parquet", COLUMNS, records)
+        logger.info("price index (%s): %d rows", name, len(records))
 
 
 def _normalize(text: str) -> str:
@@ -160,17 +178,16 @@ def _period(row: tuple) -> tuple[datetime.date, int, int | None, int | None] | N
     return None
 
 
-def _parse(path: Path) -> list[dict]:
-    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
+def parse_workbook(sheets: Sheets) -> list[dict]:
+    """1 つの Excel（read_workbook の形）を、1 行 = 地域 × 季節調整の別 × 用途 × 期間の縦持ちにする。"""
     records = []
-    for sheet in workbook.worksheets:
-        adjustment = _adjustment(sheet.title)
-        rows = list(sheet.iter_rows(values_only=True))
+    for title, rows in sheets:
+        adjustment = _adjustment(title)
         if adjustment is None or not rows:
             continue
         region_code, region_name = _region(rows)
         header, blocks = _blocks(rows)
-        for row in rows[header + 2 :]:
+        for row_no, row in enumerate(rows[header + 2 :], header + 3):
             period = _period(row)
             if period is None:
                 continue
@@ -196,29 +213,10 @@ def _parse(path: Path) -> list[dict]:
                         "change_basis": basis,
                         "change_rate": None if row[column + 1] is None else float(row[column + 1]),
                         "sample_count": None if row[column + 2] is None else int(row[column + 2]),
+                        "source_sheet": title,
+                        "source_row": row_no,
                     }
                 )
     return records
 
 
-def build_price_index_parquet() -> None:
-    """Excel を縦持ちにして Parquet に書く。1行 = 地域 × 季節調整の別 × 用途 × 期間。"""
-    PARQUET_DIR.mkdir(parents=True, exist_ok=True)
-    for name in LABELS:
-        records = _parse(XLSX_DIR / f"price_index_{name}.xlsx")
-        destination = PARQUET_DIR / f"price_index_{name}.parquet"
-        with replacing(destination) as partial:
-            if not records:
-                raise RuntimeError(f"price index ({name}): 0 rows")
-            connection = duckdb.connect()
-            columns = ", ".join(f"{column} {kind}" for column, kind in COLUMNS.items())
-            connection.execute(f"CREATE TABLE price_index ({columns})")
-            connection.executemany(
-                f"INSERT INTO price_index VALUES ({', '.join('?' for _ in COLUMNS)})",
-                [tuple(record[column] for column in COLUMNS) for record in records],
-            )
-            connection.execute(
-                "COPY price_index TO $destination (FORMAT parquet)",
-                {"destination": str(partial)},
-            )
-        logger.info("price index (%s): %d rows -> %s", name, len(records), destination)

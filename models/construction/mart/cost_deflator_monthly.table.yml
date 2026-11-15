@@ -47,3 +47,10 @@ fields:
   - name: deflator
     title: 建設工事費デフレーター
     description: 2020年度平均 = 100
+  - name: source_sha256
+    title: 元のファイルの sha256
+    description: source_file の sha256
+  - name: source_sheet
+    title: 元の Excel のシート名
+  - name: source_row
+    title: 元の Excel の行番号
