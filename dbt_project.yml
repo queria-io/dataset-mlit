@@ -7,11 +7,6 @@ model-paths: ["models"]
 macro-paths: ["shared/macros"]
 clean-targets: ["target", "dbt_packages"]
 
-# 白書の全文検索の索引は、府省の文書をまとめた gov_documents データセットで作る。
-# 前のバージョンから引き継いだテーブルを消す
-on-run-start:
-  - "DROP TABLE IF EXISTS mlit.white_paper.page_bigrams"
-
 models:
   mlit:
     +database: mlit
