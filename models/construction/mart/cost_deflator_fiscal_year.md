@@ -1,0 +1,53 @@
+---
+$schema: https://queria.io/schemas/table/v1.json
+table: construction.cost_deflator_fiscal_year
+title: 建設工事費デフレーター（年度次）
+description: |-
+  建設工事費デフレーターの年度の値で、2020 年度平均を 100 とします。1 行が 1 工事種類・年度で、1951 年度からです。
+
+  - 工事種類は月次（`cost_deflator_monthly`）と同じ 75 系列です。古い年度ほど公表されている系列が少なく、建設総合は 1960 年度からです
+  - 2023 年度以降は暫定のウエイトを使った値です（`is_provisional`）
+keywords:
+  - 建設工事費デフレーター
+  - 建設工事費
+  - デフレーター
+  - 実質化
+  - 建設投資
+  - 物価指数
+  - 建築
+  - 土木
+  - 公共事業
+sources:
+  - path: https://www.mlit.go.jp/statistics/details/t-other-2_tk_000362.html
+fields:
+  - name: category_order
+    title: 工事種類の並び順
+    description: 公表資料の列の順（1〜75）。1=建設総合で、括りの下に内訳が続く
+  - name: category
+    title: 工事種類
+    description: 公表資料の見出しの名前。名前だけでは一意にならない
+  - name: category_path
+    title: 工事種類の括り
+    description: 上の括りから「 > 」でつないだもの。この列で一意
+  - name: parent_category
+    title: 一つ上の括り
+    description: 最上位の建設総合と、構造別・用途別の15系列は NULL
+  - name: level
+    title: 括りの深さ
+    description: 1=建設総合と構造別・用途別の15系列。内訳ほど大きい
+  - name: fiscal_year
+    title: 年度
+  - name: is_provisional
+    title: 暫定値か
+    description: 公表資料で「（暫定）」が付いた年度は true
+  - name: deflator
+    title: 建設工事費デフレーター
+    description: 2020年度平均 = 100
+  - name: source_sha256
+    title: 元のファイルの sha256
+    description: source_file の sha256
+  - name: source_sheet
+    title: 元の Excel のシート名
+  - name: source_row
+    title: 元の Excel の行番号
+---

@@ -1,4 +1,0 @@
-schema: bid
-name: stg_source_file
-description: raw_source_file の列を選んだ中間テーブル。
-annotations: { queria: { published: false } }

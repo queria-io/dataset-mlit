@@ -1,4 +1,0 @@
-schema: bid
-name: stg_bid_result
-description: raw_bid_result を型付けした中間テーブル。金額を整数に、総合評価の有無を真偽値にし、入札の ID と落札の別を付ける。
-annotations: { queria: { published: false } }

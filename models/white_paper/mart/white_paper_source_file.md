@@ -1,0 +1,25 @@
+---
+$schema: https://queria.io/schemas/table/v1.json
+table: white_paper.source_file
+title: 国土交通白書の元にしたファイル
+description: |-
+  white_paper のテーブルの元にした国土交通白書の PDF の一覧です。1 行が 1 つのファイルで、同じ URL でも中身が変われば別の行になります。documents・pages の sha256 と結合できます。
+primary_key: [sha256]
+fields:
+  - name: url
+    title: 取得した URL
+  - name: page_url
+    title: 掲載されていたページの URL
+  - name: sha256
+    title: ファイルの sha256
+  - name: bytes
+    title: バイト数
+  - name: media_type
+    title: メディアタイプ
+  - name: retrieved_at
+    title: 取得した日時（UTC）
+  - name: etag
+    title: 取得したときの ETag ヘッダー
+  - name: last_modified
+    title: 取得したときの Last-Modified ヘッダー
+---
