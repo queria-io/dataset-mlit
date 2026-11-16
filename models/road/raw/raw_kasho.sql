@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 -- 箇所別基本表。配布 CSV は末尾（154〜159列目）で区間番号・道路種別・路線を再掲するため、
 -- DuckDB が _1 を付けてリネームした重複列を落とす。
 SELECT
@@ -12,7 +10,8 @@ SELECT
         "路線名_1",
         filename
     ),
-    regexp_extract(filename, '(\d{2})\.csv$', 1) AS prefecture_code
+    regexp_extract(filename, '(\d{2})\.[0-9a-f]{64}\.csv$', 1) AS prefecture_code,
+    regexp_extract(filename, '([0-9a-f]{64})\.csv$', 1) AS source_sha256
 FROM read_csv(
     'data/csv/kasho/*.csv',
     header = true,

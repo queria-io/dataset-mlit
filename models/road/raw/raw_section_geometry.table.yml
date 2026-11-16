@@ -1,4 +1,0 @@
-schema: road
-name: raw_section_geometry
-description: 交通調査基本区間の形状。可視化ツールの GeoJSON タイルを区間番号ごとにまとめた中間テーブル。ジオメトリは WKB (BLOB) で保持する。
-annotations: { queria: { published: false } }

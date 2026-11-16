@@ -1,0 +1,4 @@
+schema: construction
+name: stg_design_labor_unit_price
+description: raw_design_labor_unit_price の列を選んだ中間テーブル。
+annotations: { queria: { published: false } }

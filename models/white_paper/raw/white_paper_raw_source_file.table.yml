@@ -1,0 +1,4 @@
+schema: white_paper
+name: raw_source_file
+description: 取得した国土交通白書の PDF の一覧（取得の記録）。
+annotations: { queria: { published: false } }

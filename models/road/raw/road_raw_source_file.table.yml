@@ -1,0 +1,4 @@
+schema: road
+name: raw_source_file
+description: road のテーブルの元にした、取得したファイルの一覧（取得の記録）。
+annotations: { queria: { published: false } }

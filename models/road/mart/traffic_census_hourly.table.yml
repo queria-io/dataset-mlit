@@ -56,3 +56,6 @@ fields:
   - name: volume
     title: 時間帯別自動車類交通量
     description: 台/時
+  - name: source_sha256
+    title: 元のファイルの sha256
+    description: source_file の sha256

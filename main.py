@@ -3,16 +3,15 @@
 1. kasho:       道路交通センサス 箇所別基本表の取得（47都道府県）
 2. jikantai:    道路交通センサス 時間帯別交通量表の取得（47都道府県）
 3. tiles:       区間形状の GeoJSON タイルの取得
-4. geometry:    タイルを交通調査基本区間ごとにまとめて Parquet 化
-5. price_index: 不動産価格指数（住宅・商業用不動産）の取得と Parquet 化
-6. transaction_volume: 不動産取引件数・面積の取得と Parquet 化
-7. deflator:    建設工事費デフレーター（月次・年度次）の取得と Parquet 化
-8. labor:       公共工事設計労務単価の取得と Parquet 化
-9. negative_info: ネガティブ情報等検索サイトの行政処分等の取得と Parquet 化
-10. bids:       地方整備局の入札結果データの取得（原本は data/assets）と Parquet 化
-11. white_paper: 国土交通白書（令和3年版から）の PDF の取得とページごとの本文の Parquet 化
-12. plans:      行政事業レビューが挙げる国土交通省の計画・通知等の PDF の取得とページごとの本文の Parquet 化
-13. dbt:        dbt ビルド
+4. price_index: 不動産価格指数（住宅・商業用不動産）の取得と Parquet 化
+5. transaction_volume: 不動産取引件数・面積の取得と Parquet 化
+6. deflator:    建設工事費デフレーター（月次・年度次）の取得と Parquet 化
+7. labor:       公共工事設計労務単価の取得と Parquet 化
+8. negative_info: ネガティブ情報等検索サイトの行政処分等の取得と Parquet 化
+9. bids:       地方整備局の入札結果データの取得（原本は data/assets）と Parquet 化
+10. white_paper: 国土交通白書（令和3年版から）の PDF の取得とページごとの本文の Parquet 化
+11. plans:      行政事業レビューが挙げる国土交通省の計画・通知等の PDF の取得とページごとの本文の Parquet 化
+12. dbt:        dbt ビルド
 
 月次の定期実行（GitHub Actions の schedule）では、毎月更新される行政処分・入札結果だけを
 取り直し、dbt もその 2 つのスキーマだけを作り直す。ほかのテーブルは fdl checkout した
@@ -41,7 +40,6 @@ from pipelines.negative_info import build_negative_info_parquet, download_negati
 from pipelines.plans import build_plans_parquet, download_plans
 from pipelines.price_index import build_price_index_parquet, download_price_index
 from pipelines.traffic_census import (
-    build_geometry_parquet,
     download_jikantai,
     download_kasho,
     download_tiles,
@@ -93,7 +91,6 @@ def main():
     download_kasho()
     download_jikantai()
     download_tiles()
-    build_geometry_parquet()
     download_price_index()
     build_price_index_parquet()
     download_transaction_volume()

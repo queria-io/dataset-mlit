@@ -8,6 +8,10 @@
 区間の形状は上記2表に含まれないため、一般交通量調査結果の可視化ツールが配信している
 GeoJSON タイルから取得し、交通調査基本区間番号で結合する。
 
+ここではファイルの取得と、CSV の文字コードの変換（CP932 から UTF-8）までを行う。
+dbt の raw が読めるよう、変換した CSV とタイルのファイル名に元のファイルの sha256 を入れる。
+タイルを区間ごとの線にまとめるのは dbt。
+
 出典: 「令和3年度全国道路・街路交通情勢調査 一般交通量調査」（国土交通省）
 https://www.mlit.go.jp/road/census/r3/
 """
@@ -18,13 +22,14 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from urllib.error import HTTPError
 
-import duckdb
-
-from shared.fetch import fetch, write_atomic
+from pipelines.sources import SourceFiles
+from shared.fetch import fetch_file, write_atomic
 
 logger = logging.getLogger("pipelines")
 
+PAGE_URL = "https://www.mlit.go.jp/road/census/r3/"
 KASHO_URL = "https://www.mlit.go.jp/road/census/r3/data/csv/kasyo{pref}.csv"
 JIKANTAI_URL = "https://www.mlit.go.jp/road/census/r3/data/csv/zkntrf{pref}.csv"
 
@@ -44,8 +49,8 @@ PREFECTURES = [f"{i:02d}" for i in range(1, 48)]
 
 DATA_DIR = Path("data")
 CSV_DIR = DATA_DIR / "csv"
+ORIGINAL_CSV_DIR = DATA_DIR / "csv_original"
 TILE_DIR = DATA_DIR / "geojson_tiles"
-PARQUET_DIR = DATA_DIR / "parquet"
 TILE_INDEX = Path("tools/tile_index_z12.csv")
 TILE_LIST = Path("tools/tile_list_z12.csv")
 
@@ -96,43 +101,64 @@ def _normalize_csv(text: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _download_csv(url_template: str, destination: Path) -> None:
-    """47都道府県分の CSV を UTF-8 に直して置く。
+def _download_csv(kind: str, url_template: str) -> None:
+    """47都道府県分の CSV を取得し、UTF-8 に直して data/csv/<kind>/<都道府県>.<sha256>.csv に置く。
 
     配布ファイルは CP932。DuckDB の read_csv が扱える文字コードに寄せておく。
     """
+    sources = SourceFiles(f"traffic_census_{kind}", {"table_kind": "VARCHAR", "prefecture_code": "VARCHAR"}, REQUEST_SLEEP)
+    destination = CSV_DIR / kind
     destination.mkdir(parents=True, exist_ok=True)
     for pref in PREFECTURES:
-        path = destination / f"{pref}.csv"
-        if path.exists():
-            continue
-        body = fetch(url_template.format(pref=pref), user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT)
-        write_atomic(path, _normalize_csv(body.decode("cp932")))
-        logger.info("downloaded %s (%s bytes)", path, len(body))
-        time.sleep(REQUEST_SLEEP)
+        original = ORIGINAL_CSV_DIR / kind / f"{pref}.csv"
+        row = sources.fetch(url_template.format(pref=pref), original, page_url=PAGE_URL, table_kind=kind, prefecture_code=pref)
+        converted = destination / f"{pref}.{row['sha256']}.csv"
+        if not converted.exists():
+            write_atomic(converted, _normalize_csv(original.read_bytes().decode("cp932")))
+        # 前回の中身のファイルと、sha256 の無い名前（<都道府県>.csv）のファイルは raw に読ませない
+        for stale in destination.glob(f"{pref}.*csv"):
+            if stale != converted:
+                stale.unlink()
+    sources.write()
 
 
 def download_kasho() -> None:
     """箇所別基本表を47都道府県分ダウンロードする。"""
-    _download_csv(KASHO_URL, CSV_DIR / "kasho")
+    _download_csv("kasho", KASHO_URL)
 
 
 def download_jikantai() -> None:
     """時間帯別交通量表を47都道府県分ダウンロードする。"""
-    _download_csv(JIKANTAI_URL, CSV_DIR / "jikantai")
+    _download_csv("jikantai", JIKANTAI_URL)
 
 
 _tile_pacer = Pacer(TILE_REQUESTS_PER_SECOND)
 
 
-def _download_tile(tile: tuple[str, int, int]) -> bool:
+def _tile_path(layer: str, x: int, y: int, sha256: str) -> Path:
+    return TILE_DIR / layer / f"{x}_{y}.{sha256}.geojson"
+
+
+def _download_tile(sources: SourceFiles, tile: tuple[str, int, int]) -> bool:
+    """タイルを data/geojson_tiles/<レイヤ>/<x>_<y>.<sha256>.geojson に置く。配信されていなければ False。"""
     layer, x, y = tile
     url = TILE_URL.format(layer=layer, z=TILE_ZOOM, x=x, y=y)
+    previous = sources.previous.get(url)
+    # 前回のファイルがあれば、その名前で条件付き GET を送る
+    path = _tile_path(layer, x, y, previous["sha256"] if previous else "partial")
     _tile_pacer.wait()
-    body = fetch(url, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT, not_found_ok=True)
-    if body is None:
-        return False
-    write_atomic(TILE_DIR / layer / f"{x}_{y}.geojson", body)
+    try:
+        row = fetch_file(url, path, previous=previous, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT)
+    except HTTPError as error:
+        if error.code == 404:
+            return False
+        raise
+    final = _tile_path(layer, x, y, row["sha256"])
+    if path != final:
+        path.replace(final)
+    # sha256 の無い名前（<x>_<y>.geojson）のタイルは raw の glob に入り、同じ feature を二重に読ませる
+    (TILE_DIR / layer / f"{x}_{y}.geojson").unlink(missing_ok=True)
+    sources.rows.append({**row, "page_url": PAGE_URL, "layer": layer, "x": x, "y": y})
     return True
 
 
@@ -140,79 +166,27 @@ def download_tiles() -> None:
     """区間形状の GeoJSON タイルをダウンロードする。
 
     取りに行くのは tools/tile_list_z12.csv に載った実在するタイルだけ
-    （一覧は tools/build_tile_list.py が作る）。取得済みのタイルは飛ばす。
+    （一覧は tools/build_tile_list.py が作る）。前回から変わっていないタイルは取り直さない。
     """
     with TILE_LIST.open(encoding="utf-8") as handle:
         tiles = [(row["layer"], int(row["x"]), int(row["y"])) for row in csv.DictReader(handle)]
     for layer in TILE_LAYERS:
         (TILE_DIR / layer).mkdir(parents=True, exist_ok=True)
-
-    pending = [
-        (layer, x, y)
-        for layer, x, y in tiles
-        if not (TILE_DIR / layer / f"{x}_{y}.geojson").exists()
-    ]
-    logger.info("tiles: %d listed, %d to download", len(tiles), len(pending))
+    sources = SourceFiles("traffic_census_tiles", {"layer": "VARCHAR", "x": "INTEGER", "y": "INTEGER"})
+    logger.info("tiles: %d listed", len(tiles))
 
     missing = []
     with ThreadPoolExecutor(max_workers=TILE_WORKERS) as pool:
-        for done, (tile, found) in enumerate(zip(pending, pool.map(_download_tile, pending)), 1):
+        found_all = pool.map(lambda tile: _download_tile(sources, tile), tiles)
+        for done, (tile, found) in enumerate(zip(tiles, found_all), 1):
             if not found:
                 missing.append(tile)
             if done % 1000 == 0:
-                logger.info("tiles: %d / %d", done, len(pending))
+                logger.info("tiles: %d / %d", done, len(tiles))
 
     # 一覧にあるのに配信されていなければ、配信元のタイルが入れ替わっている。
     # 形状の欠けは dbt のテスト（road_geometry_coverage）が割合で見る
     if missing:
         logger.warning("tiles: %d listed tiles were not found: %s", len(missing), missing[:5])
+    sources.write()
     logger.info("tiles: done")
-
-
-def build_geometry_parquet() -> None:
-    """GeoJSON タイルを交通調査基本区間ごとの1本の線にまとめて Parquet に書く。
-
-    タイルは境界で区間を切るので、同じ区間が複数のタイルに分かれて入っている。
-    区間番号でまとめ、線分を集めた MultiLineString にする。
-    """
-    destination = PARQUET_DIR / "section_geometry.parquet"
-    destination.parent.mkdir(parents=True, exist_ok=True)
-
-    connection = duckdb.connect()
-    connection.execute("INSTALL spatial; LOAD spatial;")
-    connection.execute(
-        """
-        COPY (
-            WITH features AS (
-                SELECT unnest(features) AS feature
-                FROM read_json(
-                    $tiles,
-                    columns = {'features': 'JSON[]'}
-                )
-            ),
-            parts AS (
-                SELECT
-                    json_extract_string(feature, '$.properties.census') AS section_id,
-                    unnest(ST_Dump(
-                        ST_GeomFromGeoJSON(json_extract(feature, '$.geometry'))
-                    )).geom AS line
-                FROM features
-            )
-            SELECT
-                section_id,
-                ST_AsWKB(ST_Collect(list(line))) AS geometry
-            FROM parts
-            WHERE section_id IS NOT NULL
-            GROUP BY section_id
-        ) TO $destination (FORMAT parquet)
-        """,
-        {
-            "tiles": str(TILE_DIR / "*" / "*.geojson"),
-            "destination": str(destination),
-        },
-    )
-
-    count = connection.execute(
-        "SELECT count(*) FROM read_parquet($path)", {"path": str(destination)}
-    ).fetchone()[0]
-    logger.info("section geometry: %d sections -> %s", count, destination)

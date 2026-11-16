@@ -162,3 +162,6 @@ fields:
   - name: geometry
     title: 区間形状
     description: MultiLineString
+  - name: source_sha256
+    title: 元のファイルの sha256
+    description: 箇所別基本表の CSV の sha256（source_file の sha256）。区間形状のタイルは含まない

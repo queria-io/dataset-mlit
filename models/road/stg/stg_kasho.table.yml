@@ -1,0 +1,4 @@
+schema: road
+name: stg_kasho
+description: raw_kasho を型付けし、列名を英語に付け替えた中間テーブル。コードには名称の列を並べる。
+annotations: { queria: { published: false } }

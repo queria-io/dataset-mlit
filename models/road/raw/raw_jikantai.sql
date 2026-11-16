@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 -- 時間帯別交通量表。1行 = 調査単位区間 × 上下 × 車種で、7時台〜翌6時台の24列を持つ。
 -- 47都道府県のファイルは union_by_name で読む。既定では先頭ファイルから推定した方言
 -- （改行コードなど）で全ファイルを読むので、取得時期の違いで改行コードが混ざると、
@@ -43,7 +41,8 @@ SELECT
     "時間帯別自動車類交通量（台／時）／６時台",
     "昼間１２時間自動車類交通量（台）",
     "２４時間自動車類交通量（台）",
-    regexp_extract(filename, '(\d{2})\.csv$', 1) AS prefecture_code
+    regexp_extract(filename, '(\d{2})\.[0-9a-f]{64}\.csv$', 1) AS prefecture_code,
+    regexp_extract(filename, '([0-9a-f]{64})\.csv$', 1) AS source_sha256
 FROM read_csv(
     'data/csv/jikantai/*.csv',
     header = true,

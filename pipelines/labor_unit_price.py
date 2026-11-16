@@ -26,10 +26,16 @@ import unicodedata
 from datetime import date
 from pathlib import Path
 
-import duckdb
-import pdfplumber
-
-from shared.fetch import fetch, replacing, write_atomic
+from pipelines.sources import (
+    PARQUET_DIR,
+    REQUEST_TIMEOUT,
+    USER_AGENT,
+    PdfPages,
+    SourceFiles,
+    read_pdf_tables,
+    write_parquet,
+)
+from shared.fetch import fetch
 
 logger = logging.getLogger("pipelines")
 
@@ -38,10 +44,6 @@ BASE_URL = "https://www.mlit.go.jp"
 
 DATA_DIR = Path("data")
 PDF_DIR = DATA_DIR / "pdf" / "design_labor_unit_price"
-PARQUET_DIR = DATA_DIR / "parquet"
-
-USER_AGENT = "queria-dataset-mlit (+https://queria.io/)"
-REQUEST_TIMEOUT = 60
 
 # 案内ページのリンク文言。「令和８年３月から適用する公共工事設計労務単価」「平成２５年度公共工事設計労務単価」
 TITLE = re.compile(r"^(令和|平成)(\d+|元)年(?:(\d+)月から適用する|度)公共工事設計労務単価")
@@ -120,6 +122,8 @@ COLUMNS = {
     "unit_price": "INTEGER",
     "is_held_over": "BOOLEAN",
     "is_disaster_area_rate": "BOOLEAN",
+    "source_sha256": "VARCHAR",
+    "source_page": "INTEGER",
 }
 
 
@@ -153,29 +157,45 @@ def _releases(page: str) -> list[tuple[date, str]]:
 
 
 def download_labor_unit_price() -> None:
-    """改定ごとの記者発表 PDF をダウンロードする。
-
-    公表済みの PDF は差し替わらないので、取得済みなら取り直さない。
-    """
+    """改定ごとの記者発表 PDF をダウンロードする。前回から変わっていなければ取り直さない。"""
     page = fetch(PAGE_URL, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT).decode("utf-8")
     releases = _releases(page)
     if not releases:
         raise RuntimeError(f"{PAGE_URL}: 記者発表へのリンクが見つからない")
-    PDF_DIR.mkdir(parents=True, exist_ok=True)
+    sources = SourceFiles("labor_unit_price", {"applied_from": "DATE"})
+    # 前回取得した記者発表の PDF の URL。記者発表ページは取り直さず、PDF にだけ条件付き GET を送る
+    known = {row["page_url"]: row["url"] for row in sources.previous.values()}
     for applied_from, url in releases:
-        destination = PDF_DIR / f"{applied_from:%Y-%m}.pdf"
-        if destination.exists():
-            continue
-        press = fetch(url, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT).decode("utf-8")
-        # 記者発表ページの最初の PDF が本文（2点目以降は参考資料）
-        match = re.search(r'href="([^"]+\.pdf)"', press)
-        if match is None:
-            raise RuntimeError(f"{url}: PDF が見つからない")
-        href = match.group(1)
-        pdf_url = href if href.startswith("http") else BASE_URL + href
-        body = fetch(pdf_url, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT)
-        write_atomic(destination, body)
-        logger.info("labor unit price: downloaded %s (%s bytes)", pdf_url, len(body))
+        pdf_url = known.get(url) if _path(applied_from).exists() else None
+        if pdf_url is None:
+            press = fetch(url, user_agent=USER_AGENT, timeout=REQUEST_TIMEOUT).decode("utf-8")
+            # 記者発表ページの最初の PDF が本文（2点目以降は参考資料）
+            match = re.search(r'href="([^"]+\.pdf)"', press)
+            if match is None:
+                raise RuntimeError(f"{url}: PDF が見つからない")
+            href = match.group(1)
+            pdf_url = href if href.startswith("http") else BASE_URL + href
+        sources.fetch(pdf_url, _path(applied_from), page_url=url, applied_from=applied_from)
+    sources.write()
+
+
+def _path(applied_from: date) -> Path:
+    return PDF_DIR / f"{applied_from:%Y-%m}.pdf"
+
+
+def build_labor_unit_price_parquet() -> None:
+    """PDF の単価表を縦持ちにして Parquet に書く。1 行 = 適用開始月 × 都道府県 × 職種。
+    表の無い告知（2014年4月の据え置き）は行が出ない。"""
+    rows = sorted(SourceFiles("labor_unit_price").previous.values(), key=lambda row: row["applied_from"])
+    records = [
+        {**record, "source_sha256": row["sha256"]}
+        for row in rows
+        for record in parse_pdf(read_pdf_tables(_path(row["applied_from"])), row["applied_from"])
+    ]
+    if not records:
+        raise RuntimeError("labor unit price: 0 rows")
+    write_parquet(PARQUET_DIR / "design_labor_unit_price.parquet", COLUMNS, records)
+    logger.info("labor unit price: %d rows", len(records))
 
 
 def _price(cell: str | None) -> tuple[int, bool, bool] | None:
@@ -192,7 +212,7 @@ def _price(cell: str | None) -> tuple[int, bool, bool] | None:
     return int(digits.replace(",", "")), angle is not None, paren is not None
 
 
-def _parse_table(table: list[list[str | None]], applied_from: date) -> list[dict]:
+def _parse_table(table: list[list[str | None]], applied_from: date, page_no: int) -> list[dict]:
     header = [_normalize(cell) for cell in table[0]]
     column = next(i for i, cell in enumerate(header) if "都道府県" in cell)
     occupations = []
@@ -235,52 +255,26 @@ def _parse_table(table: list[list[str | None]], applied_from: date) -> list[dict
                     "unit_price": unit_price,
                     "is_held_over": is_held_over,
                     "is_disaster_area_rate": is_disaster_area_rate,
+                    "source_page": page_no,
                 }
             )
     return records
 
 
-def _parse(path: Path, applied_from: date) -> list[dict]:
+def parse_pdf(pages: PdfPages, applied_from: date) -> list[dict]:
+    """1 つの PDF（read_pdf_tables の形）の単価表を、1 行 = 都道府県 × 職種の縦持ちにする。"""
     records = []
-    with pdfplumber.open(path) as pdf:
-        for page in pdf.pages:
-            # 必要経費を含めた金額を併記した参考公表のページ（表題に「参考公表」）は取らない
-            if "参考公表" in (page.extract_text() or "").lstrip().split("\n", 1)[0]:
-                continue
-            for table in page.extract_tables():
-                if table and any("都道府県" in _normalize(cell) for cell in table[0]):
-                    records += _parse_table(table, applied_from)
+    for page_no, (text, tables) in enumerate(pages, 1):
+        # 必要経費を含めた金額を併記した参考公表のページ（表題に「参考公表」）は取らない
+        if "参考公表" in text.lstrip().split("\n", 1)[0]:
+            continue
+        for table in tables:
+            if table and any("都道府県" in _normalize(cell) for cell in table[0]):
+                records += _parse_table(table, applied_from, page_no)
 
     keys = [(r["prefecture_code"], r["occupation_code"]) for r in records]
     if len(keys) != len(set(keys)):
-        raise ValueError(f"{path}: 同じ都道府県・職種の単価が2つある")
+        raise ValueError(f"{applied_from}: 同じ都道府県・職種の単価が2つある")
     return records
 
 
-def build_labor_unit_price_parquet() -> None:
-    """PDF の単価表を縦持ちにして Parquet に書く。1行 = 適用開始月 × 都道府県 × 職種。"""
-    PARQUET_DIR.mkdir(parents=True, exist_ok=True)
-    records = []
-    for path in sorted(PDF_DIR.glob("*.pdf")):
-        year, month = map(int, path.stem.split("-"))
-        parsed = _parse(path, date(year, month, 1))
-        # 表の無い告知（2014年4月の据え置き）は行が出ない
-        logger.info("labor unit price: %s %d rows", path.stem, len(parsed))
-        records += parsed
-
-    destination = PARQUET_DIR / "design_labor_unit_price.parquet"
-    with replacing(destination) as partial:
-        if not records:
-            raise RuntimeError("labor unit price: 0 rows")
-        connection = duckdb.connect()
-        columns = ", ".join(f"{column} {kind}" for column, kind in COLUMNS.items())
-        connection.execute(f"CREATE TABLE labor_unit_price ({columns})")
-        connection.executemany(
-            f"INSERT INTO labor_unit_price VALUES ({', '.join('?' for _ in COLUMNS)})",
-            [tuple(record[column] for column in COLUMNS) for record in records],
-        )
-        connection.execute(
-            "COPY labor_unit_price TO $destination (FORMAT parquet)",
-            {"destination": str(partial)},
-        )
-    logger.info("labor unit price: %d rows -> %s", len(records), destination)
