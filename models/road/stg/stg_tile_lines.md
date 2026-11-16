@@ -1,0 +1,6 @@
+---
+$schema: https://queria.io/schemas/table/v1.json
+table: road.stg_tile_lines
+description: raw_tile_features から交通調査基本区間番号と線分を取り出した中間テーブル。1 行が 1 本の線分で、区間番号の無い feature も残す。
+published: false
+---

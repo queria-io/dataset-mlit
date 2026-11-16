@@ -1,0 +1,58 @@
+---
+$schema: https://queria.io/schemas/table/v1.json
+table: construction.design_labor_unit_price
+title: 公共工事設計労務単価（都道府県別・職種別）
+description: |-
+  公共工事の積算に使う、都道府県別・職種別の建設技能者の日額単価（8 時間当たりの円）です。1 行が 1 適用開始月・都道府県・職種で、2012 年度の単価からです。
+
+  - 単価が設定されていない職種・都道府県は行がありません
+  - 時間外などの割増賃金と、法定福利費などの経費は含みません
+keywords:
+  - 公共工事設計労務単価
+  - 設計労務単価
+  - 労務単価
+  - 公共事業労務費調査
+  - 建設技能者
+  - 職種別賃金
+  - 日額単価
+  - 積算
+  - 公共工事
+  - 建設業
+  - 賃金
+  - 交通誘導警備員
+sources:
+  - path: https://www.mlit.go.jp/totikensangyo/const/1_6_bt_000217.html
+fields:
+  - name: applied_from
+    title: 適用開始月
+    description: 単価を適用する最初の月の1日
+  - name: region
+    title: 地方連絡協議会
+    description: 北海道・東北・関東・北陸・中部・近畿・中国・四国・九州・沖縄の10地方
+  - name: prefecture_code
+    title: 都道府県コード
+    description: 2桁
+    semantic: {role: entity, name: prefecture}
+  - name: prefecture_name
+    title: 都道府県名
+  - name: occupation_code
+    title: 職種コード
+    description: 公表資料の「調査対象職種の定義・作業内容」の番号（01〜51）
+  - name: occupation
+    title: 職種
+    description: 2013年度までの交通誘導員A・Bは交通誘導警備員A・Bに統一
+  - name: unit_price
+    title: 設計労務単価
+    description: 円。所定労働時間内8時間当たり
+  - name: is_held_over
+    title: 前年度に据え置いた単価か
+    description: 2021・2022年3月適用分の特別措置で据え置いた単価は true
+  - name: is_disaster_area_rate
+    title: 被災3県の括弧書きの単価か
+    description: 岩手県・宮城県・福島県で、公表資料が括弧書きにした単価は true
+  - name: source_sha256
+    title: 元のファイルの sha256
+    description: source_file の sha256
+  - name: source_page
+    title: 元の PDF のページ番号
+---
