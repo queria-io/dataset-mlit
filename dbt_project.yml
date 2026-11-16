@@ -11,3 +11,6 @@ models:
   mlit:
     +database: mlit
     +materialized: table
+    plans:
+      stg:
+        +materialized: view
