@@ -1,6 +1,0 @@
----
-$schema: https://queria.io/schemas/table/v1.json
-table: disposition.raw_negative_info
-description: ネガティブ情報等検索サイトの一覧と概要のページを、1 件 1 行にした中間テーブル。
-published: false
----

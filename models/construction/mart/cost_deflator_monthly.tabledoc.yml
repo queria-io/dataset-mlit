@@ -1,0 +1,54 @@
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
+title: 建設工事費デフレーター（月次）
+description: |-
+  建設工事費デフレーターの月次の値で、2020 年度平均を 100 とします。1 行が 1 工事種類・月で、2016 年 4 月からです。
+
+  - 名目の工事費をこの値で割って 100 を掛けると、2020 年度価格の実質額になります
+  - 75 系列の上位の括りと内訳が同じテーブルに並びます。`category_path` か `level` で絞ってから使ってください
+topics:
+  - 建設工事費デフレーター
+  - 建設工事費
+  - デフレーター
+  - 実質化
+  - 建設投資
+  - 物価指数
+  - 建築
+  - 土木
+  - 公共事業
+sources: [t-other-2_tk_000362]
+columns:
+  - name: category_order
+    title: 工事種類の並び順
+    description: 公表資料の列の順（1〜75）。1=建設総合で、括りの下に内訳が続く
+  - name: category
+    title: 工事種類
+    description: 公表資料の見出しの名前。名前だけでは一意にならない
+  - name: category_path
+    title: 工事種類の括り
+    description: 上の括りから「 > 」でつないだもの。この列で一意
+  - name: parent_category
+    title: 一つ上の括り
+    description: 最上位の建設総合と、構造別・用途別の15系列は NULL
+  - name: level
+    title: 括りの深さ
+    description: 1=建設総合と構造別・用途別の15系列。内訳ほど大きい
+  - name: period_start
+    title: 対象月
+    description: 対象月の1日
+  - name: year
+    title: 年
+  - name: month
+    title: 月
+  - name: fiscal_year
+    title: 年度
+    description: 4月始まりの年度。1〜3月は前の年の年度
+  - name: deflator
+    title: 建設工事費デフレーター
+    description: 2020年度平均 = 100
+  - name: source_sha256
+    title: 元のファイルの sha256
+    description: source_file の sha256
+  - name: source_sheet
+    title: 元の Excel のシート名
+  - name: source_row
+    title: 元の Excel の行番号

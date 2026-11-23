@@ -1,6 +1,0 @@
----
-$schema: https://queria.io/schemas/table/v1.json
-table: plans.raw_plans_documents
-description: 行政事業レビューが挙げる計画・通知等の PDF の一覧を、pipelines が書いた Parquet のまま読んだもの
-published: false
----
