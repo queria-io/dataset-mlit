@@ -1,3 +1,3 @@
 $schema: https://tabledoc.queria.io/schemas/table/v1.json
 description: 取得した国土交通白書の PDF の一覧（取得の記録）。
-listed: false
+hidden: true

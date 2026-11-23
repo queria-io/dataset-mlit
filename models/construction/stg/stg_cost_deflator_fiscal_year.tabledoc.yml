@@ -1,3 +1,3 @@
 $schema: https://tabledoc.queria.io/schemas/table/v1.json
 description: raw_cost_deflator_fiscal_year の列を選んだ中間テーブル。
-listed: false
+hidden: true

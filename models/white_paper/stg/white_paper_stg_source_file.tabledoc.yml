@@ -1,3 +1,3 @@
 $schema: https://tabledoc.queria.io/schemas/table/v1.json
 description: raw_source_file の取得日時を日時の型にした中間テーブル。
-listed: false
+hidden: true
