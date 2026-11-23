@@ -1,0 +1,3 @@
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
+description: raw_price_index_residential の列を選んだ中間テーブル。
+listed: false

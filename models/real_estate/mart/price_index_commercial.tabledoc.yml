@@ -1,0 +1,56 @@
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
+title: 不動産価格指数（商業用不動産）
+description: |-
+  不動産価格指数（商業用不動産）の四半期の値で、2010 年平均を 100 とします。1 行が 1 地域・季節調整の別・用途・四半期で、2008 年第 2 四半期からです。
+
+  - 地域は全国・三大都市圏・三大都市圏以外・南関東圏の 4 区分です。南関東圏は 6 用途だけです
+  - 変化率は季節調整値が前期比、原系列が前年同期比です（`change_basis`）
+topics:
+  - 不動産価格指数
+  - 商業用不動産
+  - オフィス
+  - 店舗
+  - 倉庫
+  - 商業地
+  - 工業地
+  - 不動産
+sources: [real-estate-price-index]
+columns:
+  - name: region_code
+    title: 地域番号
+    description: 1=全国、2-1=三大都市圏、2-2=三大都市圏以外、2-3=南関東圏
+  - name: region_name
+    title: 地域名
+  - name: adjustment
+    title: 季節調整の別
+    description: 季節調整 / 原系列
+  - name: category
+    title: 用途
+    description: 店舗・オフィス・倉庫・工場・商業地など 10 区分
+  - name: period_start
+    title: 対象四半期の初日
+    description: 第1四半期（1〜3月）は1月1日
+  - name: year
+    title: 年
+  - name: quarter
+    title: 四半期
+    description: 1〜4。暦年の四半期（第1四半期 = 1〜3月）
+  - name: price_index
+    title: 不動産価格指数
+    description: 2010年平均 = 100
+  - name: change_basis
+    title: 変化率の比べ方
+    description: 対前期比（季節調整値）/ 対前年同期比（原系列）
+  - name: change_rate
+    title: 変化率（%）
+    description: 公表資料の値。系列の最初の期など、比べる期が無いときは NULL
+  - name: sample_count
+    title: サンプル数
+    description: 指数の算出に使った取引の件数
+  - name: source_sha256
+    title: 元のファイルの sha256
+    description: source_file の sha256
+  - name: source_sheet
+    title: 元の Excel のシート名
+  - name: source_row
+    title: 元の Excel の行番号

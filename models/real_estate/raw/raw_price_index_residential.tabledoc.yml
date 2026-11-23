@@ -1,0 +1,3 @@
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
+description: 不動産価格指数（住宅）の Excel を縦持ちにした中間テーブル。source_* は元の Excel のファイル（sha256）・シート・行。
+listed: false

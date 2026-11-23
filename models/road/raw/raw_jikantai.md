@@ -1,6 +1,0 @@
----
-$schema: https://queria.io/schemas/table/v1.json
-table: road.raw_jikantai
-description: 令和3年度 一般交通量調査の配布 CSV を読み込んだ中間テーブル。列名は配布時のまま。prefecture_code と source_sha256 はファイル名から取る。
-published: false
----
