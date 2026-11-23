@@ -56,33 +56,33 @@ licenses:
 sources:
   - id: census-r3
     title: 令和3年度 全国道路・街路交通情勢調査 一般交通量調査（国土交通省）
-    path: https://www.mlit.go.jp/road/census/r3/
+    url: https://www.mlit.go.jp/road/census/r3/
   - id: real-estate-price-index
     title: 不動産価格指数・不動産取引件数・面積（国土交通省）
-    path: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
+    url: https://www.mlit.go.jp/totikensangyo/totikensangyo_tk5_000085.html
   - id: t-other-2_tk_000362
     title: 建設工事費デフレーター（国土交通省）
-    path: https://www.mlit.go.jp/statistics/details/t-other-2_tk_000362.html
+    url: https://www.mlit.go.jp/statistics/details/t-other-2_tk_000362.html
   - id: 1_6_bt_000217
     title: 公共工事設計労務単価（国土交通省）
-    path: https://www.mlit.go.jp/totikensangyo/const/1_6_bt_000217.html
+    url: https://www.mlit.go.jp/totikensangyo/const/1_6_bt_000217.html
   - id: nega-inf
     title: ネガティブ情報等検索サイト（国土交通省）
-    path: https://www.mlit.go.jp/nega-inf/
+    url: https://www.mlit.go.jp/nega-inf/
   - id: datalink
     title: 入札結果データ（各地方整備局・北海道開発局）
-    path: https://www.mlit.go.jp/tec/nyuusatu/datalink.html
+    url: https://www.mlit.go.jp/tec/nyuusatu/datalink.html
   - id: file000004
     title: 国土交通白書（国土交通省）
-    path: https://www.mlit.go.jp/statistics/file000004.html
+    url: https://www.mlit.go.jp/statistics/file000004.html
   - id: rssystem
     title: 行政事業レビュー見える化サイト（行政改革推進本部事務局）
-    path: https://rssystem.go.jp
+    url: https://rssystem.go.jp
 
 contributors:
   - id: mlit
     title: 国土交通省
-    path: https://www.mlit.go.jp/
+    url: https://www.mlit.go.jp/
     roles: [rightsHolder]
 
 temporal_coverage: {start: "1951", end: null}

@@ -1,3 +1,3 @@
 $schema: https://tabledoc.queria.io/schemas/table/v1.json
 description: 計画・通知等の PDF のページの本文を、pipelines が書いた Parquet のまま読んだもの
-listed: false
+hidden: true

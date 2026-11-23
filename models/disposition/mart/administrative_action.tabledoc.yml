@@ -54,7 +54,7 @@ columns:
   - name: corporate_number
     title: 法人番号
     description: 13桁。検索サイトに載っていない行は NULL
-    entity: {type: foreign, name: corporate_number}
+    entity: corporate_number
   - name: license_number
     title: 許可・登録番号
     description: 建設業の許可番号や宅地建物取引業者の免許番号など。載っている分野だけ
