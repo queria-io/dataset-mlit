@@ -32,3 +32,6 @@ data/assets/
 .fdl/
 data/white_paper/
 data/plans/
+
+# 共通のスクリプト (git clone https://github.com/queria-io/dataset-shared.git shared)
+shared/
