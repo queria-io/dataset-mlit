@@ -28,11 +28,9 @@ columns:
   - name: bid_id
     title: 案件 ID
     description: 局・工事か業務か・部局・案件名・入札日から作った識別子。同じ案件の入札者の行で同じ値になる
-    dimension: categorical
   - name: bureau
     title: 局
     description: 北海道開発局・東北地方整備局など
-    dimension: categorical
   - name: kind
     title: 工事・業務
     description: 「工事」（建設工事）か「業務」（建設コンサルタント業務等）
@@ -40,7 +38,6 @@ columns:
   - name: office
     title: 部局名
     description: 発注した事務所など（「関東地方整備局　横浜国道事務所」など）
-    dimension: categorical
   - name: project_name
     title: 工事名・業務名
   - name: location

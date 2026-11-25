@@ -15,7 +15,6 @@ columns:
   - name: bureau
     title: 局
     description: 北海道開発局・東北地方整備局など
-    dimension: categorical
   - name: url
     title: ファイルの URL
   - name: page_url
