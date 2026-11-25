@@ -39,9 +39,11 @@ columns:
     description: 晴 / 曇 / 雨 / 霧 / 雪 / 不明。機械観測は不明
   - name: direction
     title: 上り・下りの別
+    dimension: categorical
   - name: vehicle_type
     title: 車種区分
     description: 小型車 / 大型車。ナンバープレートの分類番号による
+    dimension: categorical
   - name: hour
     title: 時間帯
     description: 0〜23。その時刻台の1時間

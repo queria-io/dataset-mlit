@@ -24,9 +24,11 @@ columns:
   - name: adjustment
     title: 季節調整の別
     description: 季節調整 / 原系列
+    dimension: categorical
   - name: category
     title: 用途
     description: 店舗・オフィス・倉庫・工場・商業地など 10 区分
+    dimension: categorical
   - name: period_start
     title: 対象四半期の初日
     description: 第1四半期（1〜3月）は1月1日

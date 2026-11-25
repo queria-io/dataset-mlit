@@ -48,7 +48,6 @@ columns:
   - name: authority
     title: 処分等を行った者
     description: 地方整備局・運輸局・都道府県など。鉄道事業者など検索サイトに載っていない分野は NULL
-    dimension: categorical
   - name: name
     title: 事業者名
   - name: corporate_number
