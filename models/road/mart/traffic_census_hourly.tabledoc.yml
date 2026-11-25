@@ -37,6 +37,7 @@ columns:
   - name: weather
     title: 天候
     description: 晴 / 曇 / 雨 / 霧 / 雪 / 不明。機械観測は不明
+    dimension: categorical
   - name: direction
     title: 上り・下りの別
     dimension: categorical
