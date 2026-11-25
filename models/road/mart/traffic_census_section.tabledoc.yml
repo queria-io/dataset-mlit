@@ -23,8 +23,10 @@ columns:
     entity: prefecture
   - name: road_type_code
     title: 道路種別コード
+    dimension: categorical
   - name: road_type
     title: 道路種別
+    dimension: categorical
   - name: route_number
     title: 路線番号
   - name: route_name
@@ -42,6 +44,7 @@ columns:
     title: 区間種別コード
   - name: section_type
     title: 区間種別
+    dimension: categorical
   - name: section_length_km
     title: 区間延長
     description: km。道路中心線上の延長
@@ -157,6 +160,7 @@ columns:
   - name: roadside_type
     title: 代表沿道状況
     description: 人口集中地区かつ商業地域 / 人口集中地区（商業地域を除く）/ その他市街部 / 平地部 / 山地部
+    dimension: categorical
   - name: geometry
     title: 区間形状
     description: MultiLineString

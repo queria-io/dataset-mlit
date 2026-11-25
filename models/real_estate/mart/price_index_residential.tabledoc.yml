@@ -27,9 +27,11 @@ columns:
   - name: adjustment
     title: 季節調整の別
     description: 季節調整 / 原系列
+    dimension: categorical
   - name: category
     title: 用途
     description: 住宅総合 / 住宅地 / 戸建住宅 / マンション(区分所有)
+    dimension: categorical
   - name: period_start
     title: 対象月
     description: 対象月の1日

@@ -35,9 +35,11 @@ columns:
   - name: occupation_code
     title: 職種コード
     description: 公表資料の「調査対象職種の定義・作業内容」の番号（01〜51）
+    dimension: categorical
   - name: occupation
     title: 職種
     description: 2013年度までの交通誘導員A・Bは交通誘導警備員A・Bに統一
+    dimension: categorical
   - name: unit_price
     title: 設計労務単価
     description: 円。所定労働時間内8時間当たり

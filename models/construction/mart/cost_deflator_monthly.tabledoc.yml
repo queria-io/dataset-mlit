@@ -23,12 +23,14 @@ columns:
   - name: category
     title: 工事種類
     description: 公表資料の見出しの名前。名前だけでは一意にならない
+    dimension: categorical
   - name: category_path
     title: 工事種類の括り
     description: 上の括りから「 > 」でつないだもの。この列で一意
   - name: parent_category
     title: 一つ上の括り
     description: 最上位の建設総合と、構造別・用途別の15系列は NULL
+    dimension: categorical
   - name: level
     title: 括りの深さ
     description: 1=建設総合と構造別・用途別の15系列。内訳ほど大きい

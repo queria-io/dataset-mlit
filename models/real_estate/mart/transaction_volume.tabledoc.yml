@@ -32,6 +32,7 @@ columns:
   - name: category
     title: 用途
     description: 戸建住宅・マンション(区分所有)・店舗・オフィスなど 7 区分
+    dimension: categorical
   - name: period_start
     title: 対象月
     description: 対象月の1日
